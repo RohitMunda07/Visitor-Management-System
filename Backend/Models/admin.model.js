@@ -1,7 +1,7 @@
 import mongoose, { mongo } from "mongoose";
 import { Schema } from "mongoose";
 import bcrypt from "bcrypt"
-import jtw from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 
 const adminSchema = new Schema({
     fullName: {
@@ -30,9 +30,11 @@ const adminSchema = new Schema({
     aadharDetail: {
         type: Number
     },
+    refreshToken: {
+        type: String
+    }
 }, { timestamps: true })
 
-const Admin = mongoose.model('Admin', adminSchema)
 
 // ============================================================
 // Password related work
@@ -47,15 +49,11 @@ adminSchema.pre("save", async function (next) {
 adminSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
-// ================================================================
-
-
 
 // =================================================================
 // generating access token and refresh token
-
 adminSchema.methods.generateAccessToken = async function () {
-    return jtw.sign(
+    return jwt.sign(
         {
             _id: this._id,
             fullName,
@@ -70,7 +68,7 @@ adminSchema.methods.generateAccessToken = async function () {
 }
 
 adminSchema.methods.generateRefreshToken = async function () {
-    return jtw.sign(
+    return jwt.sign(
         {
             _id: this._id
         },
@@ -81,4 +79,5 @@ adminSchema.methods.generateRefreshToken = async function () {
     )
 }
 
+const Admin = mongoose.model('Admin', adminSchema)
 export default Admin
