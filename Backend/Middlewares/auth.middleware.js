@@ -1,7 +1,7 @@
-import asyncHandler from "../Utils/asyncHandler.js"
+import { asyncHandler } from "../Utils/asyncHandler.js"
 import jwt from "jsonwebtoken"
 import apiError from "../Utils/errorHandler.js"
-import Admin from "../Models/admin.model.js"
+import User from "../Models/user.model.js"
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
     // Get the header from req
@@ -9,25 +9,33 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     // verify the header
     if (!authHeader || !authHeader.startsWith("Bearer")) {
-        throw new apiError(401, "Not Authenticated: No Token Provided");
+        throw new apiError(403, "Not Authenticated: No Token Provided");
     }
 
     // Extract token from header
     const token = authHeader.split(" ")[1];
-
+    // console.log("token extracted:", token);
+    
     try {
-        // verify token
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
+        // verify token (should be access token for protected routes)
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            // console.log("verified decodedToken for access token");
+        } catch (err) {
+            console.error('JWT verification error:', err && err.message);
+            throw err;
+        }
+        
         // Find user in DB
-        const admin = await Admin.findById(decodedToken?._id).select("-password -refreshToken");
+        const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
 
-        if (!admin) {
-            throw new apiError(404, "Admin not found");
+        if (!user) {
+            throw new apiError(404, "user not found");
         }
 
-        // Attach the admin to request
-        req.admin = admin;
+        // Attach the user to request
+        req.user = user;
         next();
     } catch (error) {
         throw new apiError(401, "Invalid or Expired Token")

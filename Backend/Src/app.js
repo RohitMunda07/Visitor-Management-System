@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import { errorMiddleware } from "../Middlewares/error.middleware.js";
+import userRoute from "../Routes/user.route.js"
 
 const app = express();
 
@@ -18,9 +19,12 @@ app.use(express.urlencoded({
     limit: "20kb"
 }));
 
-app.use(express.static('Public'))
+app.use(express.static('Public'));
 
 app.use(cookieParser());
+
+// user route
+app.use('/api/v1/user', userRoute);
 
 app.use(errorMiddleware)
 

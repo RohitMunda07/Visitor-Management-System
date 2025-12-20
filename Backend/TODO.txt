@@ -1,0 +1,2 @@
+check for contact number form req.body
+validate aadhar card

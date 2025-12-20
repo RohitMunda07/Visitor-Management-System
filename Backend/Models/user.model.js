@@ -3,20 +3,19 @@ import { Schema } from "mongoose";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-const adminSchema = new Schema({
+const userSchema = new Schema({
     fullName: {
         type: String,
         trim: true,
         index: true,
         required: true
     },
-    contact: {
-        type: Number,
+    phoneNumber: {
+        type: String,
         required: true
     },
     email: {
         type: String,
-        required: true,
         unique: true,
         trim: true
     },
@@ -24,11 +23,14 @@ const adminSchema = new Schema({
         type: String,
         required: true,
     },
+    role: {
+        type: String
+    },
     profileImgae: {
         type: String
     },
     aadharDetail: {
-        type: Number
+        type: String
     },
     refreshToken: {
         type: String
@@ -38,7 +40,7 @@ const adminSchema = new Schema({
 
 // ============================================================
 // Password related work
-adminSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next()
 
     this.password = await bcrypt.hash(this.password, 10)
@@ -46,18 +48,18 @@ adminSchema.pre("save", async function (next) {
 })
 
 // compare password at login time
-adminSchema.methods.isPasswordCorrect = async function (password) {
+userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
 // =================================================================
 // generating access token and refresh token
-adminSchema.methods.generateAccessToken = async function () {
+userSchema.methods.generateAccessToken = async function () {
     return jwt.sign(
         {
             _id: this._id,
-            fullName,
-            email
+            fullName: this.fullName,
+            email: this.email
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
@@ -67,7 +69,7 @@ adminSchema.methods.generateAccessToken = async function () {
     )
 }
 
-adminSchema.methods.generateRefreshToken = async function () {
+userSchema.methods.generateRefreshToken = async function () {
     return jwt.sign(
         {
             _id: this._id
@@ -79,5 +81,5 @@ adminSchema.methods.generateRefreshToken = async function () {
     )
 }
 
-const Admin = mongoose.model('Admin', adminSchema)
-export default Admin
+const User = mongoose.model('User', userSchema)
+export default User
