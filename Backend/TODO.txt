@@ -1,2 +1,5 @@
 check for contact number form req.body
 validate aadhar card
+refine using ai
+admin profile image and aadhar validate
+add router for visitor

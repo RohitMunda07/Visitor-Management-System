@@ -2,6 +2,7 @@ import { asyncHandler } from "../Utils/asyncHandler.js"
 import apiResponse from "../Utils/apiResponse.js"
 import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
+import jwt from "jsonwebtoken"
 
 // Generate Access and Refresh Token
 const generateAccessAndRefreshToken = async (id) => {
@@ -124,7 +125,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findById(existingUser?._id)
         .select("-password -refreshToken");
     console.log(accessToken, refreshToken);
-    
+
 
     return res
         .status(200)
@@ -162,8 +163,83 @@ const logoutUser = asyncHandler(async (req, res) => {
         )
 })
 
+// Delete User
+const deleteUser = asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    if (!password || password.trim() === "") {
+        throw new apiError(400, "Password Field is Missing");
+    }
+
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new apiError(404, "User Not Found");
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        throw new apiError(400, "Invalid Password");
+    }
+
+    await User.findByIdAndDelete(user?._id);
+
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                {},
+                "User Deleted Successfully"
+            )
+        )
+
+})
+
+// Update Access and Refresh Token
+const updateAccessToken = asyncHandler(async (req, res) => {
+    const incommingToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+    if (!incommingToken) {
+        throw new apiError(401, "Refresh Token is Missing Unauthorized Request")
+    }
+
+    // decode token to find user
+    const decodedToken = jwt.verify(incommingToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // find user in DB using DecodedToken
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+        throw new apiError(400, "Invalid Token to find user")
+    }
+
+    if (user.refreshToken !== incommingToken) {
+        throw new apiError(400, "Refresh Token Expired");
+    }
+
+    const { refreshToken: newRefreshToken, accessToken } = await generateAccessAndRefreshToken(user?._id);
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+        .status(200)
+        .cookies("accessToken", accessToken, options)
+        .cookies("refreshToken", newRefreshToken, options)
+        .json(
+            new apiResponse(
+                200,
+                { accessToken, refreshToken: newRefreshToken },
+                "Access Token Updated Successfully"
+            )
+        )
+})
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    deleteUser,
+    updateAccessToken
 }

@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 const userSchema = new Schema({
     fullName: {
         type: String,
+        lowercase: true,
         trim: true,
         index: true,
         required: true
