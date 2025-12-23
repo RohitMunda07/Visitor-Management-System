@@ -61,7 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
             Object.entries(data).forEach(([key, value]) => {
                 const field = value ?? '';
                 if (field === '' || (typeof field === 'string' && field.trim() === '')) {
-                    throw new apiError(400, `${key} is Missing`)
+                    throw new apiError(400, `${key} is Missing`);
                 }
             });
 
@@ -165,33 +165,51 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // Delete User
 const deleteUser = asyncHandler(async (req, res) => {
-    const { password } = req.body;
-    if (!password || password.trim() === "") {
-        throw new apiError(400, "Password Field is Missing");
-    }
+    const { fullName, role, password } = req.body;
+    const data = req.body;
+    try {
 
-    const user = await User.findById(req.user?._id);
-    if (!user) {
-        throw new apiError(404, "User Not Found");
-    }
+        if (data === null || typeof data !== "object") {
+            throw new apiError(400, "Expected an Object");
+        }
 
-    const isPasswordValid = await user.isPasswordCorrect(password);
-    if (!isPasswordValid) {
-        throw new apiError(400, "Invalid Password");
-    }
+        Object.entries(data).forEach(([key, value]) => {
+            const field = value ?? '';
+            if (field === '' || (typeof field === 'string' && field.trim() === '')) {
+                throw new apiError(400, `${key} is Missing`);
+            }
+        })
 
-    await User.findByIdAndDelete(user?._id);
-
-    return res
-        .status(200)
-        .json(
-            new apiResponse(
-                200,
-                {},
-                "User Deleted Successfully"
-            )
+        const user = await User.findOne(
+            { $and: [{ fullName }, { role }] }
         )
 
+        if (!user) {
+            throw new apiError(404, "User Not Found");
+        }
+
+        const isPasswordValid = await user.isPasswordCorrect(password);
+        if (!isPasswordValid) {
+            throw new apiError(400, "Invalid Password");
+        }
+
+        await User.findOneAndDelete(
+            { $and: [{ fullName }, { role }] }
+        )
+
+        return res
+            .status(200)
+            .json(
+                new apiResponse(
+                    200,
+                    {},
+                    `${role} Deleted Successfully`
+                )
+            )
+
+    } catch (error) {
+        throw new apiError(500, `Somenthing went wrong while deleting ${role}`)
+    }
 })
 
 // Update Access and Refresh Token
@@ -236,10 +254,57 @@ const updateAccessToken = asyncHandler(async (req, res) => {
         )
 })
 
+// Update Password
+const updatePassword = asyncHandler(async (req, res) => {
+    const { fullName, role, newPassword } = req.body;
+
+    const data = req.body;
+    try {
+
+        if (data === null || typeof data !== "object") {
+            throw new apiError(400, "Expected an Object");
+        }
+
+        Object.entries(data).forEach(([key, value]) => {
+            const field = value ?? '';
+            if (field === '' || (typeof field === 'string' && field.trim() === '')) {
+                throw new apiError(400, `${key} is Missing`);
+            }
+        })
+
+        const user = await User.findOneAndUpdate(
+            {
+                $and: [{ fullName }, { role }]
+            },
+            {
+                $set: {
+                    password: newPassword
+                }
+            },
+            {
+                new: true
+            }
+        )
+        return res
+            .status(200)
+            .json(
+                new apiResponse(
+                    200,
+                    user,
+                    "Password Updated Successfully"
+                )
+            )
+    } catch (error) {
+        throw new apiError(500, "Something went wrong while updating the password");
+    }
+})
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     deleteUser,
-    updateAccessToken
+    updateAccessToken,
+    updatePassword
 }

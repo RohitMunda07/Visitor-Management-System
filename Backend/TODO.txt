@@ -3,3 +3,4 @@ validate aadhar card
 refine using ai
 admin profile image and aadhar validate
 add router for visitor
+implement a loader in front-end

@@ -2,7 +2,7 @@ import { asyncHandler } from "../Utils/asyncHandler.js";
 import apiResponse from "../Utils/apiResponse.js";
 import Visitor from "../Models/visitor.modle.js";
 import apiError from "../Utils/errorHandler.js";
-import { uploadOnCloudinary } from "../Utils/cloudinary.js"
+import { uploadOnCloudinary, delteFromCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose";
 import { SORT_TYPE } from "../Utils/constant.js";
 
@@ -68,11 +68,12 @@ const insertVisitor = asyncHandler(async (req, res) => {
         throw new apiError(400, "Visitor Image is Missing")
     }
 
-    let imageUrl = null;
+    let imageData = {};
     try {
         const res = await uploadOnCloudinary(visitorImgaePath);
         if (res.secure_url) {
-            imageUrl = res.secure_url;
+            imageData.imageUrl = res.secure_url;
+            imageData.publicId = res.public_id;
         }
     } catch (error) {
         throw new apiError(500, "Something went wrong while uploading image");
@@ -85,7 +86,7 @@ const insertVisitor = asyncHandler(async (req, res) => {
         company,
         work,
         phoneNumber: phoneStr,
-        visitorImgae: imageUrl,
+        visitorImgae: imageData,
         aadharDetail,
         personToVisiting
     })
@@ -213,10 +214,39 @@ const searchVisitor = asyncHandler(async (req, res) => {
         )
 })
 
+// Delete Visitor
+const deleteVisitor = asyncHandler(async (req, res) => {
+    const { visitorArray } = req.body;
+
+    // Validate that VisitorArray is an array
+    if (!Array.isArray(visitorArray) || !visitorArray.every(v => typeof v === 'object')) {
+        throw new apiError(400, "visitorArray must be an array");
+    }
+
+    visitorArray.forEach(async (v) => {
+        // deleting image from cloudinary
+        await delteFromCloudinary(v.publicId);
+
+        // deleting visitor response from database
+        await Visitor.deleteOne({ _id: v._id });
+    })
+
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                {},
+                "Visitors Deleted Successfully"
+            )
+        )
+})
+
 
 export {
     insertVisitor,
     getAllVisitors,
     toggleStatus,
-    searchVisitor
+    searchVisitor,
+    deleteVisitor
 }

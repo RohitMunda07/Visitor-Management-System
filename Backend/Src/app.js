@@ -1,8 +1,9 @@
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
 import { errorMiddleware } from "../Middlewares/error.middleware.js";
-import userRoute from "../Routes/user.route.js"
+import visitorRoute from "../Routes/visitor.route.js";
+import userRoute from "../Routes/user.route.js";
+import cookieParser from "cookie-parser";
+import express from "express";
+import cors from "cors";
 
 const app = express();
 
@@ -25,6 +26,9 @@ app.use(cookieParser());
 
 // user route
 app.use('/api/v1/user', userRoute);
+
+// visitor route
+app.use('/api/v1/visitor', visitorRoute);
 
 app.use(errorMiddleware)
 

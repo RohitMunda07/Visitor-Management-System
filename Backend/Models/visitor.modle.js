@@ -30,7 +30,10 @@ const visitorSchema = new Schema({
         required: true
     },
     visitorImgae: {
-        type: String
+        type: {
+            imageURL: String,
+            publicId: String
+        }
     },
     aadharDetail: {
         type: String,
