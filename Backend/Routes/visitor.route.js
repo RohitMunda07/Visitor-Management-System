@@ -13,7 +13,7 @@ const router = Router();
 router.route('/insert-visitor').post(verifyJWT, upload.single("visitorImgae"), insertVisitor);
 router.route('/get-all-visitor').get(verifyJWT, getAllVisitors);
 router.route("/search-visitor").get(verifyJWT, searchVisitor);
-router.route("/toggle-status").put(verifyJWT, toggleStatus);
+router.route("/toggle-status/:visitorId").put(verifyJWT, toggleStatus);
 router.route("/delete-visitors").delete(verifyJWT, deleteVisitor);
 
 export default router

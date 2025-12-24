@@ -72,7 +72,7 @@ const insertVisitor = asyncHandler(async (req, res) => {
     try {
         const res = await uploadOnCloudinary(visitorImgaePath);
         if (res.secure_url) {
-            imageData.imageUrl = res.secure_url;
+            imageData.imageURL = res.secure_url;
             imageData.publicId = res.public_id;
         }
     } catch (error) {
@@ -94,7 +94,7 @@ const insertVisitor = asyncHandler(async (req, res) => {
     if (!visitor) {
         throw new apiError(500, "Something went wrong while creating visitor")
     }
-    const newvisitor = await visitor.findById(visitor?._id)
+    const newvisitor = await Visitor.findById(visitor?._id)
 
     return res
         .status(201)
@@ -128,7 +128,7 @@ const getAllVisitors = asyncHandler(async (req, res) => {
         .limit(pageSize)
         .sort({ createdAt: sortValue })
 
-    if (allVisitors.length < 0) {
+    if (allVisitors.length === 0) {
         throw new apiError(404, "No Records Available");
     }
 
@@ -193,7 +193,7 @@ const toggleStatus = asyncHandler(async (req, res) => {
 // Search Visitor
 const searchVisitor = asyncHandler(async (req, res) => {
     const { fullName } = req.query;
-    if (!fullName || fullName.trim === "") {
+    if (!fullName || fullName.trim() === "") {
         throw new apiError(400, "Fullname can't be empty")
     }
 
@@ -223,13 +223,18 @@ const deleteVisitor = asyncHandler(async (req, res) => {
         throw new apiError(400, "visitorArray must be an array");
     }
 
-    visitorArray.forEach(async (v) => {
-        // deleting image from cloudinary
-        await delteFromCloudinary(v.publicId);
+    // ensure all deletions run and are awaited
+    await Promise.all(visitorArray.map(async (v) => {
+        if (v.publicId) {
+            await delteFromCloudinary(v.publicId);
+        }
 
-        // deleting visitor response from database
-        await Visitor.deleteOne({ _id: v._id });
-    })
+        if (v._id && mongoose.Types.ObjectId.isValid(v._id)) {
+            await Visitor.deleteOne({ _id: new mongoose.Types.ObjectId(v._id) });
+        } else {
+            await Visitor.deleteOne({ _id: v._id });
+        }
+    }));
 
     return res
         .status(200)

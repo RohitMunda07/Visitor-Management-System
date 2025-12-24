@@ -53,6 +53,20 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new apiError(400, "Not an Indian Number");
     }
 
+    // Aadhar Validation (same as visitor controller)
+    const isValidAadhaar = (aadhaar) => {
+        if (typeof aadhaar !== "string") return false;
+
+        // Regex: 12 digits, first digit 2-9, optional spaces every 4 digits
+        const aadhaarRegex = /^(?!0|1)\d{4}\s?\d{4}\s?\d{4}$/;
+
+        return aadhaarRegex.test(aadhaar.trim());
+    }
+
+    if (!isValidAadhaar(aadharDetail)) {
+        throw new apiError(400, "Invalid Aadhar Details")
+    }
+
     // Validating other fields
     if (!Array.isArray(req.body)) {
         let data = req.body;
@@ -165,51 +179,47 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // Delete User
 const deleteUser = asyncHandler(async (req, res) => {
-    const { fullName, role, password } = req.body;
+    const { fullName, role } = req.body;
     const data = req.body;
-    try {
 
-        if (data === null || typeof data !== "object") {
-            throw new apiError(400, "Expected an Object");
-        }
-
-        Object.entries(data).forEach(([key, value]) => {
-            const field = value ?? '';
-            if (field === '' || (typeof field === 'string' && field.trim() === '')) {
-                throw new apiError(400, `${key} is Missing`);
-            }
-        })
-
-        const user = await User.findOne(
-            { $and: [{ fullName }, { role }] }
-        )
-
-        if (!user) {
-            throw new apiError(404, "User Not Found");
-        }
-
-        const isPasswordValid = await user.isPasswordCorrect(password);
-        if (!isPasswordValid) {
-            throw new apiError(400, "Invalid Password");
-        }
-
-        await User.findOneAndDelete(
-            { $and: [{ fullName }, { role }] }
-        )
-
-        return res
-            .status(200)
-            .json(
-                new apiResponse(
-                    200,
-                    {},
-                    `${role} Deleted Successfully`
-                )
-            )
-
-    } catch (error) {
-        throw new apiError(500, `Somenthing went wrong while deleting ${role}`)
+    if (data === null || typeof data !== "object") {
+        throw new apiError(400, "Expected an Object");
     }
+
+    Object.entries(data).forEach(([key, value]) => {
+        const field = value ?? '';
+        if (field === '' || (typeof field === 'string' && field.trim() === '')) {
+            throw new apiError(400, `${key} is Missing`);
+        }
+    })
+
+    console.log("finding user ");
+
+    const user = await User.findOne(
+        { $and: [{ fullName }, { role }] }
+    )
+
+    console.log("user check");
+
+    if (!user) {
+        throw new apiError(404, "User Not Found");
+    }
+
+    await User.findOneAndDelete(
+        { $and: [{ fullName }, { role }] }
+    )
+
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                {},
+                `Fullname ${fullName} Role ${role} Deleted Successfully`
+            )
+        )
+
+
 })
 
 // Update Access and Refresh Token
@@ -217,11 +227,16 @@ const updateAccessToken = asyncHandler(async (req, res) => {
     const incommingToken = req.cookies?.refreshToken || req.body.refreshToken;
 
     if (!incommingToken) {
-        throw new apiError(401, "Refresh Token is Missing Unauthorized Request")
+        throw new apiError(400, "Refresh Token is Missing Unauthorized Request")
     }
 
     // decode token to find user
-    const decodedToken = jwt.verify(incommingToken, process.env.REFRESH_TOKEN_SECRET);
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(incommingToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (err) {
+        throw new apiError(401, "Invalid or Expired Refresh Token");
+    }
 
     // find user in DB using DecodedToken
     const user = await User.findById(decodedToken?._id);
@@ -236,15 +251,16 @@ const updateAccessToken = asyncHandler(async (req, res) => {
 
     const { refreshToken: newRefreshToken, accessToken } = await generateAccessAndRefreshToken(user?._id);
 
-    const options = {
+    const cookieOptions = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
     }
 
     return res
         .status(200)
-        .cookies("accessToken", accessToken, options)
-        .cookies("refreshToken", newRefreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", newRefreshToken, cookieOptions)
         .json(
             new apiResponse(
                 200,
@@ -257,6 +273,9 @@ const updateAccessToken = asyncHandler(async (req, res) => {
 // Update Password
 const updatePassword = asyncHandler(async (req, res) => {
     const { fullName, role, newPassword } = req.body;
+
+    fullName.toLowercase();
+    role.toLowercase();
 
     const data = req.body;
     try {
@@ -295,8 +314,72 @@ const updatePassword = asyncHandler(async (req, res) => {
                 )
             )
     } catch (error) {
-        throw new apiError(500, "Something went wrong while updating the password");
+        throw new apiError(500, "Something went wrong while updating the password", error);
     }
+})
+
+// Get All Admin and Security 
+const getAllAdminAndSecurity = asyncHandler(async (req, res) => {
+    // Accept role via query to match pagination usage (GET requests)
+    const { role } = req.query;
+    const { page = 1, limit = 50 } = req.query;
+
+    if (!role) {
+        throw new apiError(400, "Role is required");
+    }
+
+    const pageNo = Math.min(1, Number(page));
+    const pageSize = Math.max(50, Number(limit));
+    const offSet = (pageNo - 1) * pageSize;
+
+    const users = await User.find({ role })
+        .select("-password -refreshToken")
+        .skip(offSet)
+        .limit(pageSize);
+
+    if (users.length === 0) {
+        throw new apiError(404, `No record found for ${role}`);
+    }
+
+    const totalDocs = await User.countDocuments({ role });
+    const totalPages = Math.ceil(totalDocs / limit);
+    const hasPrevious = pageNo > 1;
+    const hasNext = pageNo < totalPages;
+
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                {
+                    users,
+                    pagination: {
+                        currentPage: pageNo,
+                        dataPerPage: pageSize,
+                        totalPages,
+                        hasNext,
+                        hasPrevious
+                    }
+                },
+                "Record fetched successfully"
+            )
+        )
+
+})
+
+// Get Current User
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user?._id)
+        .select("-password");
+    return res
+        .status(200)
+        .json(
+            new apiResponse(
+                200,
+                user,
+                "Fetched Current User Successfully"
+            )
+        )
 })
 
 
@@ -306,5 +389,7 @@ export {
     logoutUser,
     deleteUser,
     updateAccessToken,
-    updatePassword
+    updatePassword,
+    getAllAdminAndSecurity,
+    getCurrentUser
 }

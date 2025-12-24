@@ -1,7 +1,7 @@
 import multer from "multer"
 import fs, { mkdirSync } from "fs"
 
-const TEMP_DIR = '../Public/temp';
+const TEMP_DIR = './Public/temp';
 if (!TEMP_DIR) {
     mkdirSync(TEMP_DIR, { recursive: true })
 }

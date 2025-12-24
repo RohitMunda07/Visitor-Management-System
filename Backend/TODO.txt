@@ -1,6 +1,8 @@
 check for contact number form req.body
 validate aadhar card
-refine using ai
 admin profile image and aadhar validate
 add router for visitor
 implement a loader in front-end
+
+fix visitor imageURL and publicId in visitor.controller.js
+pagination on getallusers -> admin side
