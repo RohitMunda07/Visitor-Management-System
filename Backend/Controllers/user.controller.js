@@ -113,7 +113,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
-    const { role, password } = req.body;
+    const {empId, role, password } = req.body;
 
     if (!role) {
         throw new apiError(400, "Role Field Missing");
