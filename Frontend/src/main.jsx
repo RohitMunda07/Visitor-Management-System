@@ -15,9 +15,9 @@ createRoot(document.getElementById('root')).render(
         <Routes>
           <Route path='/security' element={<SecurityPage />} />
           <Route path='/admin' element={<AdminPage />} />
+          <Route path='/' element={<App />} />
         </Routes>
       </Provider>
     </BrowserRouter>
-    <App />
   </StrictMode>,
 )

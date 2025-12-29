@@ -5,7 +5,7 @@ import { store } from './context/store'
 export default function App() {
   return (
     <div>
-
+      home
     </div>
   )
 }
