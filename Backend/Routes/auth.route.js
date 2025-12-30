@@ -1,0 +1,18 @@
+import { Router } from 'express'
+import { verifyJWT } from '../Middlewares/auth.middleware.js'
+import { authorizeRoles } from '../Middlewares/role.middleware.js'
+import { ROLES } from '../Utils/roles.js'
+import {
+    registerUser,
+    loginUser,
+    logoutUser,
+} from '../Controllers/user.controller.js'
+import { upload } from '../Middlewares/multer.middleware.js'
+
+const router = Router();
+
+router.route("/register").post(upload.single('profileImage'), registerUser);
+router.route("/login").post(loginUser);
+router.route("/logout").get(verifyJWT, logoutUser);
+
+export default router;

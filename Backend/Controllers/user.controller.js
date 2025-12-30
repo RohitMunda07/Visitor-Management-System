@@ -3,6 +3,7 @@ import apiResponse from "../Utils/apiResponse.js"
 import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
+import { uploadOnCloudinary } from "../Utils/cloudinary.js"
 
 // Generate Access and Refresh Token
 const generateAccessAndRefreshToken = async (id) => {
@@ -31,6 +32,8 @@ const generateAccessAndRefreshToken = async (id) => {
 
 // Register User 
 const registerUser = asyncHandler(async (req, res) => {
+    console.log("req.body", req.body);
+
     const {
         fullName,
         phoneNumber,
@@ -84,13 +87,33 @@ const registerUser = asyncHandler(async (req, res) => {
         }
     }
 
+    // Imgae Validation
+    const imagePath = req.file?.path;
+    console.log("Image path", imagePath);
+
+    if (!imagePath) {
+        throw new apiError(400, "Visitor Image is Missing")
+    }
+
+    let imageData = {};
+    try {
+        const res = await uploadOnCloudinary(imagePath);
+        if (res.secure_url) {
+            imageData.imageURL = res.secure_url;
+            imageData.publicId = res.public_id;
+        }
+    } catch (error) {
+        throw new apiError(500, "Something went wrong while uploading image");
+    }
+
     const user = await User.create({
         fullName,
         phoneNumber: phoneStr,
         email,
         password,
         role,
-        aadharDetail
+        aadharDetail,
+        profileImage: imageData
     })
 
     if (!user) {
@@ -113,7 +136,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
-    const {empId, role, password } = req.body;
+    const { email, role, password } = req.body;
 
     if (!role) {
         throw new apiError(400, "Role Field Missing");
@@ -123,7 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new apiError(400, "Either Password Field Missing or Invalid Password")
     }
 
-    const existingUser = await User.findOne({ role });
+    const existingUser = await User.findOne({ email, role });
     if (!existingUser) {
         throw new apiError(404, "User Not Found")
     }

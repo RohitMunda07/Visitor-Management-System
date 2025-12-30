@@ -62,15 +62,15 @@ const insertVisitor = asyncHandler(async (req, res) => {
     }
 
     // Visitor's Imgae Validation
-    const visitorImgaePath = req.file?.path;
+    const visitorImagePath = req.file?.path;
 
-    if (!visitorImgaePath) {
+    if (!visitorImagePath) {
         throw new apiError(400, "Visitor Image is Missing")
     }
 
     let imageData = {};
     try {
-        const res = await uploadOnCloudinary(visitorImgaePath);
+        const res = await uploadOnCloudinary(visitorImagePath);
         if (res.secure_url) {
             imageData.imageURL = res.secure_url;
             imageData.publicId = res.public_id;
@@ -86,7 +86,7 @@ const insertVisitor = asyncHandler(async (req, res) => {
         company,
         work,
         phoneNumber: phoneStr,
-        visitorImgae: imageData,
+        visitorImage: imageData,
         aadharDetail,
         personToVisiting
     })

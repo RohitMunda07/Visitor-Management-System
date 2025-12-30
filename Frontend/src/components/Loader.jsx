@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function Loader({ 
-  size = 'medium', 
-  text = 'Loading...', 
+export default function Loader({
+  size = 'medium',
+  text = 'Loading...',
   showText = true,
-  overlay = true 
+  overlay = true,
 }) {
   const sizeClasses = {
     small: 'w-8 h-8 border-2',

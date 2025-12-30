@@ -13,6 +13,7 @@ import {
 
 const router = Router();
 router.route('/insert-visitor').post(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), upload.single("visitorImgae"), insertVisitor);
+// router.route('/insert-visitor').post(upload.single("visitorImgae"), insertVisitor);
 router.route('/get-all-visitor').get(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), getAllVisitors);
 router.route("/search-visitor").get(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), searchVisitor);
 router.route("/toggle-status/:visitorId").put(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), toggleStatus);

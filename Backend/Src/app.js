@@ -1,6 +1,7 @@
 import { errorMiddleware } from "../Middlewares/error.middleware.js";
 import visitorRoute from "../Routes/visitor.route.js";
 import userRoute from "../Routes/user.route.js";
+import authRoute from "../Routes/auth.route.js";
 import cookieParser from "cookie-parser";
 import express from "express";
 import cors from "cors";
@@ -23,6 +24,9 @@ app.use(express.urlencoded({
 app.use(express.static('Public'));
 
 app.use(cookieParser());
+
+// user route
+app.use('/api/v1/auth', authRoute);
 
 // user route
 app.use('/api/v1/user', userRoute);

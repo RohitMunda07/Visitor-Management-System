@@ -27,8 +27,11 @@ const userSchema = new Schema({
     role: {
         type: String
     },
-    profileImgae: {
-        type: String
+    profileImage: {
+        type: {
+            imageURL: String,
+            publicId: String
+        }
     },
     aadharDetail: {
         type: String

@@ -21,7 +21,6 @@ router.route("/login").post(loginUser);
 router.route("/update-token").post(updateAccessToken);
 
 // secure routes
-router.route("/logout").get(verifyJWT, logoutUser);
 router.route("/delete-user").delete(verifyJWT, authorizeRoles(ROLES.ADMIN), deleteUser);
 router.route("/update-password").put(verifyJWT, authorizeRoles(ROLES.ADMIN), updatePassword);
 router.route("/get-all-users").get(verifyJWT, authorizeRoles(ROLES.ADMIN), getAllAdminAndSecurity);

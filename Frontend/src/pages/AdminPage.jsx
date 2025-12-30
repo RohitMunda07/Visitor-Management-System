@@ -14,6 +14,7 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
   ];
 
   const dispatch = useDispatch();
+  const [showLoader, setShowLoader] = useState(false);
   const toggleValue = useSelector((state) => state.visitorDetail.value);
   console.log(toggleValue);
 
@@ -100,7 +101,7 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
         </div>
       </div>
 
-      <Loader />
+      {showLoader && <Loader />}
     </div>
   );
 }

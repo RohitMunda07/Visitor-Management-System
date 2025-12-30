@@ -7,6 +7,8 @@ import AdminPage from './pages/AdminPage.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux'
 import { store } from './context/store.js'
+import Login from './components/Login.jsx'
+import Register from './components/Register.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -15,7 +17,8 @@ createRoot(document.getElementById('root')).render(
         <Routes>
           <Route path='/security' element={<SecurityPage />} />
           <Route path='/admin' element={<AdminPage />} />
-          <Route path='/' element={<App />} />
+          <Route path='/' element={<Login />} />
+          <Route path='/register' element={<Register />} />
         </Routes>
       </Provider>
     </BrowserRouter>
