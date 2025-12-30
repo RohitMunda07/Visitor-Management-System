@@ -14,9 +14,9 @@ import {
 const router = Router();
 router.route('/insert-visitor').post(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), upload.single("visitorImgae"), insertVisitor);
 // router.route('/insert-visitor').post(upload.single("visitorImgae"), insertVisitor);
-router.route('/get-all-visitor').get(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), getAllVisitors);
+router.route('/get-all-visitor').get(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN, ROLES.HOD), getAllVisitors);
 router.route("/search-visitor").get(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), searchVisitor);
-router.route("/toggle-status/:visitorId").put(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN), toggleStatus);
-router.route("/delete-visitors").delete(verifyJWT, authorizeRoles(ROLES.ADMIN), deleteVisitor);
+router.route("/toggle-status/:visitorId").put(verifyJWT, authorizeRoles(ROLES.SECURITY, ROLES.ADMIN, ROLES.HOD), toggleStatus);
+router.route("/delete-visitors").delete(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), deleteVisitor);
 
 export default router

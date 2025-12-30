@@ -1,3 +1,5 @@
 implement update access token insite axios interceptor
 implement forget password page
 remove sensitive data after login
+implement search bar in admin page
+implement delete visitor

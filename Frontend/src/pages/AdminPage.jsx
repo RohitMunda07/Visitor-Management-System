@@ -1,34 +1,87 @@
 import { Users, Shield, Search, Trash2, UserPlus, Eye, X, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addVisitorDetails } from "../context/visitorDetailSlice"
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Loader from '../components/Loader';
+import ErrorAlert from '../components/ErrorAlert';
+import VisitorDetailModal from '../components/VisitorDetailModal';
+import { del, get } from '../api/axiosMethods';
 
 
-export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor }) {
-  const visitorData = [
-    { id: 1, name: 'Rajesh Kumar', person: 'Manager', contact: '9876543210', company: 'Tech Corp', work: "meet-up", addharDetails: "8100-5551-0091" },
-    { id: 2, name: 'Priya Sharma', person: 'HR Head', contact: '9876543211', company: 'InfoSys', work: "meet-up", addharDetails: "8100-5551-0091" },
-    { id: 3, name: 'Amit Patel', person: 'Director', contact: '9876543212', company: 'Reliance', work: "meet-up", addharDetails: "8100-5551-0091" },
-    { id: 4, name: 'Sneha Singh', person: 'CEO', contact: '9876543213', company: 'Wipro', work: "meet-up", addharDetails: "8100-5551-0091" }
-  ];
+export default function AdminPage() {
+  const [visitorData, setVisitorData] = useState([]);
 
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [showLoader, setShowLoader] = useState(false);
   const toggleValue = useSelector((state) => state.visitorDetail.value);
+  const [showLoader, setShowLoader] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showError, setShowError] = useState(false);
+
   console.log(toggleValue);
 
   const handleView = (visitor) => {
+    console.log(visitor);
     dispatch(addVisitorDetails({
-      id: visitor.id,
-      name: visitor.name,
-      person: visitor.person,
-      contact: visitor.contact,
+      id: visitor._id,
+      name: visitor.fullName,
+      person: visitor.personToVisiting,
+      contact: visitor.phoneNumber,
       company: visitor.company,
       work: visitor.work,
-      aadharDetails: visitor.addharDetails, // ⚠️ spelling fix
+      aadharDetails: visitor.aadharDetail,
+      image: visitor.visitorImgae.imageURL,
     }));
   };
+
+  const handleLogout = async () => {
+    try {
+      setShowLoader(true);
+      const response = await get("auth/logout");
+      console.log(response.data.message);
+      sessionStorage.clear();
+      navigate("/");
+    } catch (error) {
+      console.log("Error while logout", error);
+    } finally {
+      setShowLoader(false);
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      const response = await del("visitor/delete-visitors");
+      console.log(response.data.message);
+    } catch (error) {
+      console.log("Error while deleting Visitor details", error);
+      setErrorMsg(error?.response?.data?.message || "Error while deleting Visitor details");
+      setShowError(true)
+    } finally {
+      setShowLoader(false)
+    }
+  }
+
+  useEffect(() => {
+    const fetchVisitors = async () => {
+      try {
+        setShowLoader(true);
+        const response = await get("visitor/get-all-visitor");
+        console.log(response.data.data);
+        const getAllVisitors = response.data.data.allVisitors
+        const filterVisitors = getAllVisitors.filter((visitor) => visitor.status === false);
+        setVisitorData(filterVisitors);
+      } catch (error) {
+        console.log("Error while fetching Visitor details", error);
+        setErrorMsg(error?.response?.data?.message || "Error while fetching Visitor details");
+        setShowError(true)
+      } finally {
+        setShowLoader(false)
+      }
+    };
+
+    fetchVisitors();
+  }, []);
 
   return (
     <div className="space-y-8 inset-0 px-10 py-8">
@@ -40,7 +93,7 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
             Get All Users
           </button>
           <button
-            onClick={onLogout}
+            onClick={handleLogout}
             className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow"
           >
             Logout
@@ -72,14 +125,14 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
 
         {/* Visitor List */}
         <div className="mt-6 space-y-3">
-          {visitorData.map((visitor) => (
+          {visitorData.map((visitor, index) => (
             <div
-              key={visitor.id}
+              key={index + 1}
               className="border border-gray-300 bg-white p-4 rounded hover:border-blue-400 transition-colors shadow-sm cursor-pointer"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <span className="text-gray-700">#{visitor.id} - {visitor.name}</span>
+                  <span className="text-gray-700">#{index + 1} - {visitor.fullName}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -88,10 +141,13 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
                   >
                     View
                   </button>
-                  <button className="text-green-600 hover:text-green-700">
+                  {/* <button
+                    className="text-green-600 hover:text-green-700">
                     <CheckCircle cursor={"pointer"} size={20} />
-                  </button>
-                  <button className="text-red-600 hover:text-red-700">
+                  </button> */}
+                  <button
+                    onClick={handleDelete}
+                    className="text-red-600 hover:text-red-700">
                     <X cursor={"pointer"} size={24} />
                   </button>
                 </div>
@@ -101,7 +157,14 @@ export default function AdminPage({ onLogout, onSwitchToSecurity, onViewVisitor 
         </div>
       </div>
 
+      {toggleValue && <VisitorDetailModal />}
       {showLoader && <Loader />}
+      {showError &&
+        <ErrorAlert
+          autoClose={true}
+          message={errorMsg}
+          onClose={() => setShowError(false)}
+        />}
     </div>
   );
 }

@@ -1,21 +1,47 @@
 import { Users, Shield, Search, Trash2, UserPlus, Eye, X, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeVisitorDetails } from '../context/visitorDetailSlice';
+import { get, put } from '../api/axiosMethods';
+import Loader from './Loader';
+import ErrorAlert from './ErrorAlert';
+import { useState } from 'react';
 
 export default function VisitorDetailModal() {
 
   const dispatch = useDispatch();
   const {
     value,
+    id,
     name,
     company,
     person,
     contact,
     work,
-    aadharDetails
+    aadharDetails,
+    image
   } = useSelector((state) => state.visitorDetail);
 
   if (!value) return null;
+
+  const [showLoader, setShowLoader] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showError, setShowError] = useState(false);
+
+  const handleAprove = async () => {
+    try {
+      setShowLoader(true);
+      const response = await put(`visitor/toggle-status/${id}`, {})
+      console.log(response.data.message);
+
+    } catch (error) {
+      console.log("Error will toggling status");
+      setErrorMsg(error?.response?.data?.message || "Error will toggling status");
+      setShowError(true)
+    } finally {
+      setShowError(false);
+      setShowLoader(false);
+    }
+  }
 
   return (
     <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}>
@@ -92,18 +118,30 @@ export default function VisitorDetailModal() {
 
           <div className="col-span-2">
             <label className="block mb-2 text-gray-700">Visitor Image</label>
-            <div className="w-full border border-gray-300 px-3 py-2 rounded bg-gray-50">
-              <span className="text-gray-600">visitor_image.jpg</span>
+            <div className="flex justify-center w-full border border-gray-300 px-3 py-2 rounded bg-gray-50">
+              <img
+                className='w-sm'
+                src={image} />
             </div>
           </div>
 
           <div className="col-span-2 flex justify-center mt-4">
-            <button className="px-8 py-2 border border-gray-300 bg-green-500 text-white rounded hover:bg-green-600 shadow">
+            <button
+              onClick={handleAprove}
+              className="px-8 py-2 border border-gray-300 bg-green-500 text-white rounded hover:bg-green-600 shadow">
               Approve
             </button>
           </div>
         </div>
       </div>
+
+      {showLoader && <Loader />}
+      {showError &&
+        <ErrorAlert
+          autoClose={true}
+          message={errorMsg}
+          onClose={() => setShowError(false)}
+        />}
     </div>
   );
 }

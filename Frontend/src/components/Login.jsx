@@ -45,10 +45,16 @@ export default function Login() {
             const response = await post("auth/login", formData);
 
             const role = response?.data?.data?.user?.role;
+            const accessToken = response?.data?.data?.accessToken;
+            const refreshToken = response?.data?.data?.refreshToken;
+            // console.log(token);
 
             if (!role) {
                 throw new Error("Role not found");
             }
+            
+            sessionStorage.setItem('access', accessToken || '');
+            sessionStorage.setItem('refresh', refreshToken || '');
 
             if (role === "hod" || role === "admin") {
                 navigate("/admin")

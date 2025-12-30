@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { get, post } from '../api/axiosMethods';
 import Loader from '../components/Loader';
 import ErrorAlert from '../components/ErrorAlert';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function SecurityPage({ onLogout }) {
@@ -21,6 +22,7 @@ export default function SecurityPage({ onLogout }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
+  const navigate = useNavigate();
 
   const handleImage = (e) => {
     const file = e.target.files[0];
@@ -81,6 +83,20 @@ export default function SecurityPage({ onLogout }) {
     setVisitorImage(null);
   }
 
+  const handleLogout = async () => {
+    try {
+      setShowLoader(true);
+      const response = await get("auth/logout");
+      console.log(response.data.message);
+      sessionStorage.clear();
+      navigate("/");
+    } catch (error) {
+      console.log("Error while logout", error);
+    } finally {
+      setShowLoader(false);
+    }
+  }
+
   useEffect(() => {
     console.log("user form data", visitorData);
   },)
@@ -90,7 +106,7 @@ export default function SecurityPage({ onLogout }) {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Security Page</h1>
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow"
         >
           Logout

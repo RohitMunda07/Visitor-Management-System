@@ -15,8 +15,8 @@ import {
 
 const router = Router();
 
-router.route("/register").post(verifyJWT, authorizeRoles(ROLES.ADMIN), registerUser);
-router.route("/login").post(loginUser);
+// router.route("/register").post(verifyJWT, authorizeRoles(ROLES.ADMIN), registerUser);
+// router.route("/login").post(loginUser);
 // update access token using refresh token (no access token required)
 router.route("/update-token").post(updateAccessToken);
 
