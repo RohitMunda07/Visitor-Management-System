@@ -62,8 +62,10 @@ export default function Login() {
             sessionStorage.setItem('role', role || '');
             dispatch(setAuth({ role, accessToken, refreshToken }));
 
-            if (role === "hod" || role === "admin") {
+            if (role === "admin") {
                 navigate("/admin")
+            } if (role === "hod") {
+                navigate("/hod")
             } else {
                 navigate("/security")
             }

@@ -10,6 +10,7 @@ import { store } from './context/store.js'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import HodPage from './pages/HodPage.jsx'
 
 const allowedRole = ["admin", "hod"]
 createRoot(document.getElementById('root')).render(
@@ -32,6 +33,15 @@ createRoot(document.getElementById('root')).render(
             element={
               <ProtectedRoute allowedRole={allowedRole}>
                 <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/hod"
+            element={
+              <ProtectedRoute allowedRole={allowedRole}>
+                <HodPage />
               </ProtectedRoute>
             }
           />

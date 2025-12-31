@@ -4,6 +4,7 @@ import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
 import { uploadOnCloudinary } from "../Utils/cloudinary.js"
+import mongoose from "mongoose"
 
 // Generate Access and Refresh Token
 const generateAccessAndRefreshToken = async (id) => {
@@ -200,50 +201,65 @@ const logoutUser = asyncHandler(async (req, res) => {
         )
 })
 
-// Delete User
+// Delete User (Single + Multiple)
 const deleteUser = asyncHandler(async (req, res) => {
-    const { fullName, role } = req.body;
-    const data = req.body;
+    const { userArray = [] } = req.body;
+    const { userId } = req.params;
 
-    if (data === null || typeof data !== "object") {
-        throw new apiError(400, "Expected an Object");
-    }
+    // ================= MULTIPLE USER DELETE =================
+    if (Array.isArray(userArray) && userArray.length > 0) {
 
-    Object.entries(data).forEach(([key, value]) => {
-        const field = value ?? '';
-        if (field === '' || (typeof field === 'string' && field.trim() === '')) {
-            throw new apiError(400, `${key} is Missing`);
+        if (!userArray.every(u => typeof u === "object" && u._id)) {
+            throw new apiError(400, "userArray must contain valid user objects");
         }
-    })
 
-    console.log("finding user ");
+        await Promise.all(
+            userArray.map(async (u) => {
 
-    const user = await User.findOne(
-        { $and: [{ fullName }, { role }] }
-    )
+                // delete image from cloudinary
+                if (u.publicId) {
+                    await delteFromCloudinary(u.publicId);
+                }
 
-    console.log("user check");
+                // delete user from DB
+                if (mongoose.Types.ObjectId.isValid(u._id)) {
+                    await User.deleteOne({ _id: new mongoose.Types.ObjectId(u._id) });
+                }
+            })
+        );
 
-    if (!user) {
-        throw new apiError(404, "User Not Found");
+    }
+    // ================= SINGLE USER DELETE =================
+    else {
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            throw new apiError(400, "Invalid User Id");
+        }
+
+        const existingUser = await User.findById(userId);
+
+        if (!existingUser) {
+            throw new apiError(404, "User Not Found");
+        }
+
+        // delete image from cloudinary
+        const userPublicId = existingUser?.profileImage?.publicId;
+        if (userPublicId) {
+            await delteFromCloudinary(userPublicId);
+        }
+
+        // delete user from DB
+        await User.findByIdAndDelete(existingUser._id);
     }
 
-    await User.findOneAndDelete(
-        { $and: [{ fullName }, { role }] }
-    )
-
-    return res
-        .status(200)
-        .json(
-            new apiResponse(
-                200,
-                {},
-                `Fullname ${fullName} Role ${role} Deleted Successfully`
-            )
+    return res.status(200).json(
+        new apiResponse(
+            200,
+            {},
+            "User(s) Deleted Successfully"
         )
+    );
+});
 
-
-})
 
 // Update Access and Refresh Token
 const updateAccessToken = asyncHandler(async (req, res) => {
@@ -295,9 +311,12 @@ const updateAccessToken = asyncHandler(async (req, res) => {
 
 // Update Password
 const updatePassword = asyncHandler(async (req, res) => {
-    const { fullName, role, newPassword } = req.body;
+    const { userId, role, newPassword } = req.body;
 
-    fullName.toLowercase();
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new apiError(400, "Invalid User Id");
+    }
+
     role.toLowercase();
 
     const data = req.body;
@@ -316,7 +335,7 @@ const updatePassword = asyncHandler(async (req, res) => {
 
         const user = await User.findOneAndUpdate(
             {
-                $and: [{ fullName }, { role }]
+                $and: [{ _id: userId }, { role }]
             },
             {
                 $set: {

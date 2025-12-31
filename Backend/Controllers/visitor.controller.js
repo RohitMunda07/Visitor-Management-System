@@ -255,7 +255,7 @@ const deleteVisitor = asyncHandler(async (req, res) => {
 
         // delete image from cloudinary
         if (visitorPublicId) {
-            await delteFromCloudinary(v.publicId);
+            await delteFromCloudinary(visitorPublicId);
         }
 
         // delete visitor from DB

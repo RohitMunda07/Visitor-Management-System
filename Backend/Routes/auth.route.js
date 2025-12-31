@@ -6,6 +6,7 @@ import {
     registerUser,
     loginUser,
     logoutUser,
+    updateAccessToken,
 } from '../Controllers/user.controller.js'
 import { upload } from '../Middlewares/multer.middleware.js'
 
@@ -14,5 +15,6 @@ const router = Router();
 router.route("/register").post(upload.single('profileImage'), registerUser);
 router.route("/login").post(loginUser);
 router.route("/logout").get(verifyJWT, logoutUser);
+router.route("/update-token").post(updateAccessToken);
 
 export default router;

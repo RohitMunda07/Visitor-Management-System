@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Users, 
-  UserPlus, 
-  FileText, 
-  Settings, 
+import {
+  Menu,
+  X,
+  Home,
+  Users,
+  UserPlus,
+  FileText,
+  Settings,
   LogOut,
   ChevronRight,
   Shield,
@@ -87,9 +87,10 @@ export default function Sidebar({ userRole = 'employee', onNavigate, onLogout })
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full bg-white shadow-xl z-40 transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-          lg:translate-x-0 lg:static lg:shadow-lg w-64 flex flex-col`}
+        className={`fixed inset-y-0 left-0 bg-white shadow-xl z-40 
+            transition-transform duration-300 ease-in-out
+             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+             w-full lg:w-64 lg:translate-x-0 flex flex-col`}
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">

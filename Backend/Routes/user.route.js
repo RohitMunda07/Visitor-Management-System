@@ -18,7 +18,7 @@ const router = Router();
 // router.route("/register").post(verifyJWT, authorizeRoles(ROLES.ADMIN), registerUser);
 // router.route("/login").post(loginUser);
 // update access token using refresh token (no access token required)
-router.route("/update-token").post(updateAccessToken);
+// router.route("/update-token").post(updateAccessToken);
 
 // secure routes
 router.route("/delete-user").delete(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), deleteUser);

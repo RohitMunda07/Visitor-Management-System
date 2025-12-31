@@ -7,6 +7,7 @@ import Loader from '../components/Loader';
 import ErrorAlert from '../components/ErrorAlert';
 import VisitorDetailModal from '../components/VisitorDetailModal';
 import { del, get } from '../api/axiosMethods';
+import Sidebar from '../components/Sidebar';
 
 
 export default function AdminPage() {
@@ -149,6 +150,27 @@ export default function AdminPage() {
     }
   };
 
+  const fetchVisitorsByStatus = async (status) => {
+    try {
+      setShowLoader(true);
+      setLoaderMsg("Fetching Visitors");
+
+      const response = await get("visitor/get-all-visitor");
+      const allVisitors = response.data.data.allVisitors;
+
+      const filtered = allVisitors.filter(
+        (visitor) => visitor.status === status
+      );
+
+      setVisitorData(filtered);
+    } catch (error) {
+      setErrorMsg("Error while fetching visitors");
+      setShowError(true);
+    } finally {
+      setShowLoader(false);
+      setLoaderMsg("");
+    }
+  };
 
 
   useEffect(() => {
@@ -220,6 +242,7 @@ export default function AdminPage() {
               onClick={handleSearch}
               className="absolute right-3 top-2.5 text-blue-500 cursor-pointer" size={20} />
           </div>
+
           <div className="relative">
             {/* Trigger Button */}
             <button
@@ -243,15 +266,23 @@ export default function AdminPage() {
             {showFilter && (
               <div className="absolute mt-2 w-full bg-white border border-gray-300 
                     rounded shadow z-20">
-                {["Get Visitors", "Approved", "Pending"].map((item) => (
+                {["Get Visitors", "Approved"].map((item) => (
                   <button
                     key={item}
                     onClick={() => {
                       setFilter(item);
                       setShowFilter(false);
+
+                      if (item === "Approved") {
+                        fetchVisitorsByStatus(true);
+                      }
+
+                      if (item === "Get Visitors") {
+                        fetchVisitorsByStatus(false);
+                      }
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 
-                     hover:bg-gray-100"
+               hover:bg-gray-100"
                   >
                     {item}
                   </button>
