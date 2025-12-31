@@ -8,5 +8,6 @@ fix visitor imageURL and publicId in visitor.controller.js
 pagination on getallusers -> admin side
 
 use empId for login
+* implemet empId everywhere
 replace fullname with empId for update password
 add email or otp verification 

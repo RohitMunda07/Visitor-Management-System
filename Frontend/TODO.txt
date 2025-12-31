@@ -3,3 +3,8 @@ implement forget password page
 remove sensitive data after login
 implement search bar in admin page
 implement delete visitor
+authentication from frontend
+implement sidebar in admin and security page
+implement custom alert
+pagination testing in frontend
+implement outlet for sidebar and pages(admin, security)

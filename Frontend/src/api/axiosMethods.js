@@ -40,8 +40,8 @@ api.interceptors.response.use(
     }
 );
 
-export const get = async (url) => {
-    const response = await api.get(url);
+export const get = async (url, config) => {
+    const response = await api.get(url, config);
     return response;
 }
 
@@ -55,7 +55,7 @@ export const put = async (url, data, config) => {
     return response;
 }
 
-export const del = async (url) => {
-    const response = api.delete(url);
+export const del = async (url, config) => {
+    const response = api.delete(url, config);
     return response;
 }

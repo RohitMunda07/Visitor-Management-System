@@ -3,6 +3,8 @@ import { post } from "../api/axiosMethods";
 import Loader from "../components/Loader";
 import ErrorAlert from "../components/ErrorAlert";
 import { useNavigate } from "react-router-dom";
+import { setAuth } from "../context/authContext";
+import { useSelector, useDispatch } from "react-redux";
 
 export default function Login() {
     const [formData, setFormData] = useState({
@@ -15,6 +17,8 @@ export default function Login() {
     const [errorMsg, setErrorMsg] = useState("");
     const [showError, setShowError] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
+
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const togglePassword = () => {
@@ -52,9 +56,11 @@ export default function Login() {
             if (!role) {
                 throw new Error("Role not found");
             }
-            
+
             sessionStorage.setItem('access', accessToken || '');
             sessionStorage.setItem('refresh', refreshToken || '');
+            sessionStorage.setItem('role', role || '');
+            dispatch(setAuth({ role, accessToken, refreshToken }));
 
             if (role === "hod" || role === "admin") {
                 navigate("/admin")

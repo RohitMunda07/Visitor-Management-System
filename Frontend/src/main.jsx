@@ -9,18 +9,39 @@ import { Provider } from 'react-redux'
 import { store } from './context/store.js'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 
+const allowedRole = ["admin", "hod"]
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <Provider store={store}>
+    <Provider store={store}>
+      <BrowserRouter>
         <Routes>
-          <Route path='/security' element={<SecurityPage />} />
-          <Route path='/admin' element={<AdminPage />} />
-          <Route path='/' element={<Login />} />
-          <Route path='/register' element={<Register />} />
+
+          <Route
+            path="/security"
+            element={
+              <ProtectedRoute allowedRole="security">
+                <SecurityPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRole={allowedRole}>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
         </Routes>
-      </Provider>
-    </BrowserRouter>
-  </StrictMode>,
-)
+      </BrowserRouter>
+    </Provider>
+  </StrictMode>
+);
+

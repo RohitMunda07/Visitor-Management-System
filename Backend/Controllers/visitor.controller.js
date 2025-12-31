@@ -193,48 +193,75 @@ const toggleStatus = asyncHandler(async (req, res) => {
 // Search Visitor
 const searchVisitor = asyncHandler(async (req, res) => {
     const { fullName } = req.query;
-    if (!fullName || fullName.trim() === "") {
-        throw new apiError(400, "Fullname can't be empty")
+
+    if (!fullName?.trim()) {
+        throw new apiError(400, "Fullname can't be empty");
     }
 
-    const visitors = await Visitor.find({ fullName });
+    const escapedName = fullName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    if (visitors.length < 0) {
-        throw new apiError(404, "Visitor Not Found")
+    const visitors = await Visitor.find({
+        fullName: { $regex: escapedName, $options: "i" }
+    });
+
+    if (!visitors.length) {
+        throw new apiError(404, "Visitor Not Found");
     }
 
-    return res
-        .status(200)
-        .json(
-            new apiResponse(
-                200,
-                visitors,
-                "Visitors Fetched Successfully"
-            )
-        )
-})
+    return res.status(200).json(
+        new apiResponse(200, visitors, "Visitors Fetched Successfully")
+    );
+});
 
 // Delete Visitor
 const deleteVisitor = asyncHandler(async (req, res) => {
-    const { visitorArray } = req.body;
+    const { visitorArray } = req.body || [];
+    const { visitorId } = req.params;
 
-    // Validate that VisitorArray is an array
-    if (!Array.isArray(visitorArray) || !visitorArray.every(v => typeof v === 'object')) {
-        throw new apiError(400, "visitorArray must be an array");
-    }
+    if (visitorArray.length > 0) {
+        // multiple visitor delete
+        // Validate that VisitorArray is an array
+        if (!Array.isArray(visitorArray) || !visitorArray.every(v => typeof v === 'object')) {
+            throw new apiError(400, "visitorArray must be an array");
+        }
 
-    // ensure all deletions run and are awaited
-    await Promise.all(visitorArray.map(async (v) => {
-        if (v.publicId) {
+        // ensure all deletions run and are awaited
+        await Promise.all(visitorArray.map(async (v) => {
+            if (v.publicId) {
+                await delteFromCloudinary(v.publicId);
+            }
+
+            if (v._id && mongoose.Types.ObjectId.isValid(v._id)) {
+                await Visitor.deleteOne({ _id: new mongoose.Types.ObjectId(v._id) });
+            } else {
+                await Visitor.deleteOne({ _id: v._id });
+            }
+        }));
+    } else {
+        // single visitor delete
+        if (!visitorId || !mongoose.Types.ObjectId.isValid(visitorId)) {
+            throw new apiError(400, "Invalid Visitor Id");
+        }
+
+        const existingVisitor = await Visitor.findOne({ _id: visitorId });
+
+        if (!existingVisitor) {
+            throw new apiError(
+                404,
+                "Visitor Not Found"
+            )
+        }
+        const visitorPublicId = existingVisitor?.publicId;
+
+        // delete image from cloudinary
+        if (visitorPublicId) {
             await delteFromCloudinary(v.publicId);
         }
 
-        if (v._id && mongoose.Types.ObjectId.isValid(v._id)) {
-            await Visitor.deleteOne({ _id: new mongoose.Types.ObjectId(v._id) });
-        } else {
-            await Visitor.deleteOne({ _id: v._id });
-        }
-    }));
+        // delete visitor from DB
+        await Visitor.findByIdAndDelete(existingVisitor?._id);
+    }
+
 
     return res
         .status(200)

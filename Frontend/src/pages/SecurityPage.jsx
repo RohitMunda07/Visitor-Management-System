@@ -3,9 +3,10 @@ import { get, post } from '../api/axiosMethods';
 import Loader from '../components/Loader';
 import ErrorAlert from '../components/ErrorAlert';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { removeAuth } from '../context/authContext';
 
-
-export default function SecurityPage({ onLogout }) {
+export default function SecurityPage() {
   // visitorImgae
   const [visitorData, setVisitorData] = useState({
     name: "",
@@ -22,6 +23,10 @@ export default function SecurityPage({ onLogout }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
+  const [loaderMsg, setLoaderMsg] = useState("");
+
+
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleImage = (e) => {
@@ -56,6 +61,7 @@ export default function SecurityPage({ onLogout }) {
 
     try {
       setShowLoader(true);
+      setLoaderMsg("Adding Visitor");
       const response = await post("visitor/insert-visitor", formData, {
         "Content-Type": "multipart/form-data"
       });
@@ -68,6 +74,7 @@ export default function SecurityPage({ onLogout }) {
       setShowError(true);
     } finally {
       setShowLoader(false);
+      setLoaderMsg("");
     }
 
     setVisitorData({
@@ -86,14 +93,17 @@ export default function SecurityPage({ onLogout }) {
   const handleLogout = async () => {
     try {
       setShowLoader(true);
+      setLoaderMsg("Logging Out");
       const response = await get("auth/logout");
       console.log(response.data.message);
       sessionStorage.clear();
+      dispatch(removeAuth());
       navigate("/");
     } catch (error) {
       console.log("Error while logout", error);
     } finally {
       setShowLoader(false);
+      setLoaderMsg("");
     }
   }
 
@@ -227,7 +237,7 @@ export default function SecurityPage({ onLogout }) {
             </button>
           </div>
 
-          {showLoader && <Loader text={"Adding Data"} size='medium' />}
+          {showLoader && <Loader text={loaderMsg} size='medium' />}
 
           {showError &&
             <ErrorAlert
