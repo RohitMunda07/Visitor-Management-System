@@ -112,50 +112,43 @@ const insertVisitor = asyncHandler(async (req, res) => {
 const getAllVisitors = asyncHandler(async (req, res) => {
     const { page = 1, limit = 50, sortType = "newest", status } = req.query;
 
-    const pageNo = Math.min(1, Number(page));
-    const pageSize = Math.max(50, Number(limit)); // page per content
-
     if (!Object.values(SORT_TYPE).includes(sortType)) {
-        throw new apiError(400, "Invalid sort type")
+        throw new apiError(400, "Invalid sort type");
     }
 
-    const sortValue = SORT_TYPE.NEWEST === sortType ? 1 : -1;
+    const pageNo = Math.max(1, Number(page));
+    const pageSize = Math.max(1, Number(limit));
 
+    const sortValue = SORT_TYPE.NEWEST === sortType ? -1 : 1;
     const offSet = (pageNo - 1) * pageSize;
 
-    const allVisitors = await Visitor.find({})
-        .skip(offSet)
-        .limit(pageSize)
+    const query = status !== undefined ? { status } : {};
+
+    const allVisitors = await Visitor.find(query)
         .sort({ createdAt: sortValue })
+        .skip(offSet)
+        .limit(pageSize);
 
-    if (allVisitors.length === 0) {
-        throw new apiError(404, "No Records Available");
-    }
+    const totalDocs = await Visitor.countDocuments(query);
+    const totalPages = Math.ceil(totalDocs / pageSize);
 
-    const totalDocs = await Visitor.countDocuments({ status });
-    const totalPages = Math.ceil(totalDocs / limit);
-    const hasPrevious = pageNo > 1;
-    const hasNext = pageNo < totalPages;
-
-    return res
-        .status(200)
-        .json(
-            new apiResponse(
-                200,
-                {
-                    allVisitors,
-                    pagination: {
-                        currentPage: pageNo,
-                        dataPerPage: pageSize,
-                        totalPages,
-                        hasNext,
-                        hasPrevious
-                    }
-                },
-                "Fetched All Visitors Successfully"
-            )
+    return res.status(200).json(
+        new apiResponse(
+            200,
+            {
+                allVisitors,
+                pagination: {
+                    currentPage: pageNo,
+                    dataPerPage: pageSize,
+                    totalPages,
+                    hasNext: pageNo < totalPages,
+                    hasPrevious: pageNo > 1
+                }
+            },
+            "Fetched All Visitors Successfully"
         )
-})
+    );
+});
 
 // Toggle Status
 const toggleStatus = asyncHandler(async (req, res) => {
@@ -216,7 +209,7 @@ const searchVisitor = asyncHandler(async (req, res) => {
 // Delete Visitor
 const deleteVisitor = asyncHandler(async (req, res) => {
     const { visitorArray } = req.body || [];
-    const { visitorId } = req.params;
+    // const { visitorId } = req.params;
 
     if (visitorArray.length > 0) {
         // multiple visitor delete
@@ -237,31 +230,31 @@ const deleteVisitor = asyncHandler(async (req, res) => {
                 await Visitor.deleteOne({ _id: v._id });
             }
         }));
-    } else {
-        // single visitor delete
-        if (!visitorId || !mongoose.Types.ObjectId.isValid(visitorId)) {
-            throw new apiError(400, "Invalid Visitor Id");
-        }
-
-        const existingVisitor = await Visitor.findOne({ _id: visitorId });
-
-        if (!existingVisitor) {
-            throw new apiError(
-                404,
-                "Visitor Not Found"
-            )
-        }
-        const visitorPublicId = existingVisitor?.publicId;
-
-        // delete image from cloudinary
-        if (visitorPublicId) {
-            await delteFromCloudinary(visitorPublicId);
-        }
-
-        // delete visitor from DB
-        await Visitor.findByIdAndDelete(existingVisitor?._id);
     }
+    // else {
+    //     // single visitor delete
+    //     if (!visitorId || !mongoose.Types.ObjectId.isValid(visitorId)) {
+    //         throw new apiError(400, "Invalid Visitor Id");
+    //     }
 
+    //     const existingVisitor = await Visitor.findOne({ _id: visitorId });
+
+    //     if (!existingVisitor) {
+    //         throw new apiError(
+    //             404,
+    //             "Visitor Not Found"
+    //         )
+    //     }
+    //     const visitorPublicId = existingVisitor?.publicId;
+
+    //     // delete image from cloudinary
+    //     if (visitorPublicId) {
+    //         await delteFromCloudinary(visitorPublicId);
+    //     }
+
+    //     // delete visitor from DB
+    //     await Visitor.findByIdAndDelete(existingVisitor?._id);
+    // }
 
     return res
         .status(200)

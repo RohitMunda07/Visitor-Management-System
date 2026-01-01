@@ -9,7 +9,8 @@ const initialState = {
     company: "",
     work: "",
     addharDetails: "",
-    image: ""
+    image: "",
+    status: ""
 }
 
 export const visitorDetailsSlice = createSlice({

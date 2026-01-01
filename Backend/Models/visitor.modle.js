@@ -29,7 +29,7 @@ const visitorSchema = new Schema({
         type: String,
         required: true
     },
-    visitorImgae: {
+    visitorImage: {
         type: {
             imageURL: String,
             publicId: String

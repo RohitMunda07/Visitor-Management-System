@@ -7,7 +7,10 @@ import Loader from '../components/Loader';
 import ErrorAlert from '../components/ErrorAlert';
 import VisitorDetailModal from '../components/VisitorDetailModal';
 import { del, get } from '../api/axiosMethods';
-import Sidebar from '../components/Sidebar';
+import Pagination from "../components/Pagination";
+import SortFilter from "../components/SortFilter";
+import { SORT_TYPE } from "../constants/sortType";
+
 
 
 export default function AdminPage() {
@@ -21,15 +24,21 @@ export default function AdminPage() {
   const [loaderMsg, setLoaderMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
+
   const [searchValue, setSearchValue] = useState("");
   const [searchData, setSearchData] = useState([]);
   const [responseData, setResponseData] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedVisitors, setSelectedVisitors] = useState([]);
 
+  const [selectedVisitors, setSelectedVisitors] = useState([]);
   const [showFilter, setShowFilter] = useState(false);
   const [filter, setFilter] = useState("Get Visitors");
+  const [pagination, setPagination] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [sortType, setSortType] = useState(SORT_TYPE.NEWEST);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [limit, setLimit] = useState(10); // default page size
 
 
   const mapData = searchData.length === 0 ? visitorData : searchData;
@@ -46,7 +55,8 @@ export default function AdminPage() {
       company: visitor.company,
       work: visitor.work,
       aadharDetails: visitor.aadharDetail,
-      image: visitor.visitorImgae.imageURL,
+      image: visitor.visitorImage.imageURL,
+      status: visitor.status
     }));
   };
 
@@ -134,7 +144,7 @@ export default function AdminPage() {
       setShowLoader(true);
       setLoaderMsg("Deleting Selected Visitors");
 
-      const response = await del("visitor/delete-visitors/dummy", {
+      const response = await del("visitor/delete-visitors", {
         data: {
           visitorArray: selectedVisitors
         }
@@ -173,7 +183,11 @@ export default function AdminPage() {
     }
   };
 
+  const handlePageChange = (pageNo) => {
+    fetchVisitors(pageNo);
+  };
 
+  // debounce 
   useEffect(() => {
     const delay = setTimeout(() => {
       handleSearch();
@@ -187,28 +201,36 @@ export default function AdminPage() {
     console.log("search data", searchData);
   }, [searchValue, searchData]);
 
-  useEffect(() => {
-    const fetchVisitors = async () => {
-      try {
-        setShowLoader(true);
-        setLoaderMsg("Fetching Visitors")
-        const response = await get("visitor/get-all-visitor");
-        console.log(response.data.data);
-        const getAllVisitors = response.data.data.allVisitors
-        const filterVisitors = getAllVisitors.filter((visitor) => visitor.status === false);
-        setVisitorData(filterVisitors);
-      } catch (error) {
-        console.log("Error while fetching Visitor details", error);
-        setErrorMsg(error?.response?.data?.message || "Error while fetching Visitor details");
-        setShowError(true);
-      } finally {
-        setShowLoader(false);
-        setLoaderMsg("");
-      }
-    };
+  const fetchVisitors = async (pageNo = 1) => {
+    try {
+      setShowLoader(true);
+      setLoaderMsg("Fetching Visitors");
 
-    fetchVisitors();
-  }, [responseData]);
+      const response = await get("visitor/get-all-visitor", {
+        params: {
+          page: pageNo,
+          limit,
+          sortType,
+          status: filter === "Approved" ? true : false
+        }
+      });
+
+      setVisitorData(response.data.data.allVisitors);
+      setPagination(response.data.data.pagination);
+      setPage(pageNo);
+
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.message || "Error fetching visitors");
+      setShowError(true);
+    } finally {
+      setShowLoader(false);
+      setLoaderMsg("");
+    }
+  };
+
+  useEffect(() => {
+    fetchVisitors(1);
+  }, [responseData, limit, filter, sortType, refreshKey]);
 
   return (
     <div className="space-y-8 inset-0 px-10 py-8">
@@ -216,9 +238,6 @@ export default function AdminPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Page</h1>
         <div className="flex gap-3">
-          <button className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow">
-            Get All Users
-          </button>
           <button
             onClick={handleLogout}
             className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow"
@@ -243,6 +262,25 @@ export default function AdminPage() {
               onClick={handleSearch}
               className="absolute right-3 top-2.5 text-blue-500 cursor-pointer" size={20} />
           </div>
+
+          <div className="relative">
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              className="px-3 py-2 border border-gray-300 rounded text-sm bg-white shadow 
+               focus:outline-none focus:border-blue-500"
+            >
+              <option value={5}>5 / page</option>
+              <option value={10}>10 / page</option>
+              <option value={20}>20 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
+          </div>
+
+          <SortFilter
+            value={sortType}
+            onChange={setSortType}
+          />
 
           <div className="relative">
             {/* Trigger Button */}
@@ -338,12 +376,12 @@ export default function AdminPage() {
                     >
                       View
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => handleDelete(visitor._id)}
                       className="text-red-600 hover:text-red-700"
                     >
                       <X cursor={"pointer"} size={24} />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
@@ -353,7 +391,12 @@ export default function AdminPage() {
 
       </div>
 
-      {toggleValue && <VisitorDetailModal />}
+      {toggleValue && (
+        <VisitorDetailModal
+          onApproved={() => setRefreshKey(prev => prev + 1)}
+        />
+      )}
+
       {showLoader && <Loader text={loaderMsg} />}
       {showError &&
         <ErrorAlert
@@ -361,6 +404,12 @@ export default function AdminPage() {
           message={errorMsg}
           onClose={() => setShowError(false)}
         />}
+
+      <Pagination
+        pagination={pagination}
+        onPageChange={handlePageChange}
+      />
+
     </div>
   );
 }

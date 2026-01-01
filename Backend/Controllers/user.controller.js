@@ -4,7 +4,7 @@ import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
-import { uploadOnCloudinary } from "../Utils/cloudinary.js"
+import { delteFromCloudinary, uploadOnCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose"
 
 // Generate Access and Refresh Token

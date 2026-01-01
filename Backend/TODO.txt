@@ -11,3 +11,4 @@ use empId for login
 * implemet empId everywhere
 replace fullname with empId for update password
 add email or otp verification 
+update avatar controller

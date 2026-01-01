@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { post } from "../api/axiosMethods";
 import Loader from "../components/Loader";
 import ErrorAlert from "../components/ErrorAlert";
@@ -64,7 +64,7 @@ export default function Login() {
 
             if (role === "admin") {
                 navigate("/admin")
-            } if (role === "hod") {
+            } else if (role === "hod") {
                 navigate("/hod")
             } else {
                 navigate("/security")
@@ -82,11 +82,7 @@ export default function Login() {
             setShowLoader(false); // ✅ single source of truth
         }
     };
-    // Store token or user data if needed
-    // localStorage.setItem("token", response.data.token);
 
-    // Redirect based on role or handle success
-    // navigate to appropriate dashboard
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
             <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">

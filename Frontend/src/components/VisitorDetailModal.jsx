@@ -4,9 +4,9 @@ import { closeVisitorDetails } from '../context/visitorDetailSlice';
 import { get, put } from '../api/axiosMethods';
 import Loader from './Loader';
 import ErrorAlert from './ErrorAlert';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function VisitorDetailModal() {
+export default function VisitorDetailModal({ onApproved }) {
 
   const dispatch = useDispatch();
   const {
@@ -18,7 +18,8 @@ export default function VisitorDetailModal() {
     contact,
     work,
     aadharDetails,
-    image
+    image,
+    status
   } = useSelector((state) => state.visitorDetail);
 
   if (!value) return null;
@@ -26,19 +27,26 @@ export default function VisitorDetailModal() {
   const [showLoader, setShowLoader] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
+  const [loaderMsg, setLoaderMsg] = useState("");
 
   const handleAprove = async () => {
     try {
       setShowLoader(true);
-      const response = await put(`visitor/toggle-status/${id}`, {})
-      console.log(response.data.message);
+      setLoaderMsg("Aproving Request");
+      await put(`visitor/toggle-status/${id}`, {});
+
+      onApproved();            // 🔥 refresh admin page
+      dispatch(closeVisitorDetails());
+
     } catch (error) {
-      setErrorMsg(error?.response?.data?.message || "Error will toggling status");
-      setShowError(true)
+      setErrorMsg(error?.response?.data?.message || "Error while toggling status");
+      setShowError(true);
     } finally {
       setShowLoader(false);
+      setLoaderMsg("");
     }
-  }
+  };
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -127,16 +135,22 @@ export default function VisitorDetailModal() {
           <div className="col-span-2 flex justify-center mt-4">
             <button
               onClick={handleAprove}
-              className="px-8 py-2 border bg-green-500 text-white rounded hover:bg-green-600 shadow"
+              disabled={status}
+              className={`px-8 py-2 border rounded shadow transition
+                  ${status
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
+                }`}
             >
-              Approve
+              {status ? "Approved" : "Approve"}
             </button>
+
           </div>
 
         </div>
       </div>
 
-      {showLoader && <Loader />}
+      {showLoader && <Loader text={loaderMsg} />}
       {showError && (
         <ErrorAlert
           autoClose

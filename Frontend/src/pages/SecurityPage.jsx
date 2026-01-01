@@ -5,6 +5,9 @@ import ErrorAlert from '../components/ErrorAlert';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { removeAuth } from '../context/authContext';
+import { useRef } from "react";
+import { Search } from 'lucide-react';
+
 
 export default function SecurityPage() {
   // visitorImgae
@@ -24,6 +27,7 @@ export default function SecurityPage() {
   const [showError, setShowError] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [loaderMsg, setLoaderMsg] = useState("");
+  const fileInputRef = useRef(null);
 
 
   const dispatch = useDispatch();
@@ -53,11 +57,11 @@ export default function SecurityPage() {
     const formData = new FormData();
     formData.append("fullName", visitorData.name);
     formData.append("company", visitorData.company);
-    formData.append("work", visitorData.name);
+    formData.append("work", visitorData.work);
     formData.append("phoneNumber", visitorData.contact);
     formData.append("aadharDetail", visitorData.aadharDetails);
     formData.append("personToVisiting", visitorData.person);
-    formData.append("visitorImgae", visitorImage);
+    formData.append("visitorImage", visitorImage);
 
     try {
       setShowLoader(true);
@@ -88,6 +92,10 @@ export default function SecurityPage() {
 
     setPreview(null);
     setVisitorImage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   const handleLogout = async () => {
@@ -109,7 +117,7 @@ export default function SecurityPage() {
 
   useEffect(() => {
     console.log("user form data", visitorData);
-  },)
+  }, [preview, visitorImage])
 
   return (
     <div className="space-y-3 inset-0 px-10 py-8 relative">
@@ -217,6 +225,7 @@ export default function SecurityPage() {
             <input
               type="file"
               accept="image/*"
+              ref={fileInputRef}
               onChange={handleImage}
               required
               className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:bg-green-500 file:text-white hover:file:bg-green-600"

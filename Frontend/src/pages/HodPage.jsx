@@ -7,6 +7,7 @@ import { del, get } from "../api/axiosMethods";
 import UserDetailModal from "../components/UserDetailModal";
 import AddUserModal from "../components/AddUserModal";
 import UpdateUserPasswordModal from "../components/UpdateUserPasswordModal";
+import Pagination from "../components/Pagination";
 
 
 export default function HodPage() {
@@ -29,6 +30,10 @@ export default function HodPage() {
     const [showAddUser, setShowAddUser] = useState(false);
     const [passwordUser, setPasswordUser] = useState(null);
 
+    const [pagination, setPagination] = useState(null);
+    const [page, setPage] = useState(1);
+
+
     // role filter (ONLY admin & security)
     const [roleFilter, setRoleFilter] = useState("admin");
     const [showRoleFilter, setShowRoleFilter] = useState(false);
@@ -38,16 +43,25 @@ export default function HodPage() {
     );
 
     /* ================= FETCH USERS ================= */
-    const fetchAllAdminAndSecurity = async (role) => {
+    const fetchAllAdminAndSecurity = async (role, pageNo = 1) => {
         try {
             setShowLoader(true);
             setLoaderMsg("Fetching Users");
 
             const response = await get("user/get-all-users", {
-                params: { role }, // ✅ FIXED
+                params: {
+                    role,
+                    page: pageNo,
+                    limit: 50,
+                },
             });
+            console.log(response.data.data);
+            console.log(response.data.data.pagination);
 
             setUsers(response.data.data.users || []);
+            setPagination(response.data.data.pagination);
+            setPage(pageNo);
+
         } catch (error) {
             setErrorMsg(error?.response?.data?.message || "Error fetching users");
             setShowError(true);
@@ -94,7 +108,7 @@ export default function HodPage() {
             setShowLoader(true);
             setLoaderMsg("Deleting Selected Users");
 
-            await del("user/delete-users/dummy", {
+            await del("user/delete-users", {
                 data: { userArray: selectedUsers },
             });
 
@@ -126,6 +140,12 @@ export default function HodPage() {
             setShowLoader(false);
         }
     };
+
+    /* ================= Page Change ================= */
+    const handlePageChange = (pageNo) => {
+        fetchAllAdminAndSecurity(roleFilter, pageNo);
+    };
+
 
     /* ================= EFFECTS ================= */
     useEffect(() => {
@@ -295,6 +315,12 @@ export default function HodPage() {
                     onSuccess={() => { }}
                 />
             )}
+
+            <Pagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+            />
+
         </div>
     );
 }

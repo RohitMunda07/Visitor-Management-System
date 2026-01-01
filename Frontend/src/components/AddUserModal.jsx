@@ -13,12 +13,14 @@ export default function AddUserModal({ onClose, onSuccess }) {
         aadharDetail: "",
     });
 
-    const [role, setRole] = useState("security"); // ✅ separate role selector
+    const [role, setRole] = useState("security");
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
     const [image, setImage] = useState(null);
 
     const [showLoader, setShowLoader] = useState(false);
+    const [loaderMsg, setShowLoaderMsg] = useState("");
+
     const [errorMsg, setErrorMsg] = useState("");
     const [showError, setShowError] = useState(false);
 
@@ -37,8 +39,8 @@ export default function AddUserModal({ onClose, onSuccess }) {
         }
 
         try {
+            setShowLoaderMsg("Adding User");
             setShowLoader(true);
-
             const data = new FormData();
             Object.entries(formData).forEach(([key, value]) =>
                 data.append(key, value)
@@ -57,6 +59,7 @@ export default function AddUserModal({ onClose, onSuccess }) {
             setErrorMsg(error?.response?.data?.message || "Failed to create user");
             setShowError(true);
         } finally {
+            setShowLoaderMsg("");
             setShowLoader(false);
         }
     };
@@ -187,7 +190,7 @@ export default function AddUserModal({ onClose, onSuccess }) {
                 </div>
             </div>
 
-            {showLoader && <Loader />}
+            {showLoader && <Loader text={loaderMsg} />}
             {showError && (
                 <ErrorAlert
                     autoClose
