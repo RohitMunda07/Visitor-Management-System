@@ -31,16 +31,16 @@ createRoot(document.getElementById('root')).render(
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRole={allowedRole}>
+              <ProtectedRoute allowedRole="admin">
                 <AdminPage />
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/hod"
             element={
-              <ProtectedRoute allowedRole={allowedRole}>
+              <ProtectedRoute allowedRole="hod">
                 <HodPage />
               </ProtectedRoute>
             }

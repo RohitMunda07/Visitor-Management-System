@@ -60,6 +60,7 @@ export default function AdminPage() {
       navigate("/");
     } catch (error) {
       console.log("Error while logout", error);
+      setErrorMsg(error.message);
     } finally {
       setShowLoader(false);
       setLoaderMsg("");

@@ -3,6 +3,7 @@ import apiResponse from "../Utils/apiResponse.js"
 import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 import { uploadOnCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose"
 
@@ -31,10 +32,8 @@ const generateAccessAndRefreshToken = async (id) => {
     }
 }
 
-// Register User 
+// Register User
 const registerUser = asyncHandler(async (req, res) => {
-    console.log("req.body", req.body);
-
     const {
         fullName,
         phoneNumber,
@@ -44,69 +43,55 @@ const registerUser = asyncHandler(async (req, res) => {
         aadharDetail
     } = req.body;
 
-    // phone number validation
-    const indianPhoneRegex = /^(?:[6-9]\d{9}|0\d{2,4}[- ]?\d{6,8})$/;
-    const phoneStr = phoneNumber !== undefined && phoneNumber !== null ? String(phoneNumber).trim() : "";
-    if (!phoneStr) {
-        console.log("phone number from frontend:", (phoneNumber));
-        console.log("Type of phone number", typeof (phoneNumber));
-        throw new apiError(400, "Phone Number is either missing or invalid");
+    /* ================= BASIC VALIDATION ================= */
+    if (!fullName || !phoneNumber || !email || !password || !role || !aadharDetail) {
+        throw new apiError(400, "All fields are required");
     }
+
+    /* ================= ROLE VALIDATION ================= */
+    const allowedRoles = ["admin", "security", "hod"];
+    if (!allowedRoles.includes(role)) {
+        throw new apiError(400, "Invalid role");
+    }
+
+    /* ================= PHONE VALIDATION ================= */
+    const indianPhoneRegex = /^(?:[6-9]\d{9}|0\d{2,4}[- ]?\d{6,8})$/;
+    const phoneStr = String(phoneNumber).trim();
 
     if (!indianPhoneRegex.test(phoneStr)) {
-        throw new apiError(400, "Not an Indian Number");
+        throw new apiError(400, "Invalid Indian phone number");
     }
 
-    // Aadhar Validation (same as visitor controller)
-    const isValidAadhaar = (aadhaar) => {
-        if (typeof aadhaar !== "string") return false;
-
-        // Regex: 12 digits, first digit 2-9, optional spaces every 4 digits
-        const aadhaarRegex = /^(?!0|1)\d{4}\s?\d{4}\s?\d{4}$/;
-
-        return aadhaarRegex.test(aadhaar.trim());
+    /* ================= AADHAR VALIDATION ================= */
+    const aadhaarRegex = /^(?!0|1)\d{4}\s?\d{4}\s?\d{4}$/;
+    if (!aadhaarRegex.test(aadharDetail.trim())) {
+        throw new apiError(400, "Invalid Aadhar Details");
     }
 
-    if (!isValidAadhaar(aadharDetail)) {
-        throw new apiError(400, "Invalid Aadhar Details")
+    /* ================= EMAIL UNIQUE ================= */
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new apiError(409, "User already exists with this email");
     }
 
-    // Validating other fields
-    if (!Array.isArray(req.body)) {
-        let data = req.body;
-
-        if (typeof (data) === 'object' && data != null) {
-            Object.entries(data).forEach(([key, value]) => {
-                const field = value ?? '';
-                if (field === '' || (typeof field === 'string' && field.trim() === '')) {
-                    throw new apiError(400, `${key} is Missing`);
-                }
-            });
-
-        } else {
-            throw new apiError(400, "Expected an object")
-        }
-    }
-
-    // Imgae Validation
+    /* ================= IMAGE VALIDATION ================= */
     const imagePath = req.file?.path;
-    console.log("Image path", imagePath);
-
     if (!imagePath) {
-        throw new apiError(400, "Visitor Image is Missing")
+        throw new apiError(400, "Profile image is required");
     }
 
     let imageData = {};
     try {
-        const res = await uploadOnCloudinary(imagePath);
-        if (res.secure_url) {
-            imageData.imageURL = res.secure_url;
-            imageData.publicId = res.public_id;
-        }
-    } catch (error) {
-        throw new apiError(500, "Something went wrong while uploading image");
+        const uploadRes = await uploadOnCloudinary(imagePath);
+        imageData = {
+            imageURL: uploadRes.secure_url,
+            publicId: uploadRes.public_id,
+        };
+    } catch {
+        throw new apiError(500, "Error uploading profile image");
     }
 
+    /* ================= CREATE USER ================= */
     const user = await User.create({
         fullName,
         phoneNumber: phoneStr,
@@ -114,26 +99,21 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         role,
         aadharDetail,
-        profileImage: imageData
-    })
+        profileImage: imageData,
+    });
 
-    if (!user) {
-        throw new apiError(500, "Something went wrong while creating user")
-    }
-    const newUser = await User.findById(user?._id)
-        .select("-password -refreshToken")
+    const safeUser = await User.findById(user._id)
+        .select("-password -refreshToken");
 
-    return res
-        .status(201)
-        .json(
-            new apiResponse(
-                201,
-                newUser,
-                "User Created Successfully"
-            )
+    return res.status(201).json(
+        new apiResponse(
+            201,
+            safeUser,
+            "User Created Successfully"
         )
+    );
+});
 
-})
 
 // Login User
 const loginUser = asyncHandler(async (req, res) => {
@@ -317,48 +297,27 @@ const updatePassword = asyncHandler(async (req, res) => {
         throw new apiError(400, "Invalid User Id");
     }
 
-    role.toLowercase();
-
-    const data = req.body;
-    try {
-
-        if (data === null || typeof data !== "object") {
-            throw new apiError(400, "Expected an Object");
-        }
-
-        Object.entries(data).forEach(([key, value]) => {
-            const field = value ?? '';
-            if (field === '' || (typeof field === 'string' && field.trim() === '')) {
-                throw new apiError(400, `${key} is Missing`);
-            }
-        })
-
-        const user = await User.findOneAndUpdate(
-            {
-                $and: [{ _id: userId }, { role }]
-            },
-            {
-                $set: {
-                    password: newPassword
-                }
-            },
-            {
-                new: true
-            }
-        )
-        return res
-            .status(200)
-            .json(
-                new apiResponse(
-                    200,
-                    user,
-                    "Password Updated Successfully"
-                )
-            )
-    } catch (error) {
-        throw new apiError(500, "Something went wrong while updating the password", error);
+    if (!role || !newPassword || newPassword.trim() === "") {
+        throw new apiError(400, "userId, role and newPassword are required");
     }
-})
+
+    const user = await User.findOne({ _id: userId, role });
+
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json(
+        new apiResponse(
+            200,
+            {},
+            "Password Updated Successfully"
+        )
+    );
+});
 
 // Get All Admin and Security 
 const getAllAdminAndSecurity = asyncHandler(async (req, res) => {

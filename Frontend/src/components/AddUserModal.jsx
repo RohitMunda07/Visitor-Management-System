@@ -45,7 +45,7 @@ export default function AddUserModal({ onClose, onSuccess }) {
             );
 
             data.append("role", role);
-            data.append("image", image);
+            data.append("profileImage", image);
 
             await post("auth/register", data, {
                 headers: { "Content-Type": "multipart/form-data" },

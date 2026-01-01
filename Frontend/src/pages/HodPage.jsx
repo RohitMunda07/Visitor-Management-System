@@ -1,4 +1,4 @@
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
@@ -110,9 +110,21 @@ export default function HodPage() {
     };
 
     /* ================= LOGOUT ================= */
-    const handleLogout = () => {
-        sessionStorage.clear();
-        navigate("/");
+    const handleLogout = async () => {
+        try {
+            setShowLoader(true);
+            setLoaderMsg("Logging Out");
+            const response = await get("auth/logout");
+            console.log(response.data.message);
+            sessionStorage.clear();
+            navigate("/");
+        } catch (error) {
+            setErrorMsg(error.message);
+            setShowError(true);
+        } finally {
+            setLoaderMsg("");
+            setShowLoader(false);
+        }
     };
 
     /* ================= EFFECTS ================= */
@@ -137,21 +149,6 @@ export default function HodPage() {
                     >
                         Add User
                     </button>
-
-                    <div className="flex items-center gap-3">
-                        {/* <Eye
-                            className="text-blue-500 cursor-pointer"
-                            onClick={() => setViewUser(user)}
-                        /> */}
-
-                        <button
-                            onClick={() => setPasswordUser(user)}
-                            className="px-4 py-2 border bg-white rounded shadow hover:bg-gray-100"
-                        >
-                            Update Password
-                        </button>
-                    </div>
-
 
                     <button
                         onClick={handleLogout}
@@ -244,11 +241,20 @@ export default function HodPage() {
                                         #{index + 1} {user.fullName} ({user.role})
                                     </span>
                                 </div>
-                                <Eye
-                                    className="text-blue-500 cursor-pointer"
-                                    onClick={() => setViewUser(user)}
-                                />
 
+                                <div className="flex items-center gap-3">
+                                    {/* View User */}
+                                    <Eye
+                                        className="text-blue-500 cursor-pointer"
+                                        onClick={() => setViewUser(user)}
+                                    />
+
+                                    {/* Update Password */}
+                                    <Lock
+                                        className="text-indigo-600 cursor-pointer hover:text-indigo-700"
+                                        onClick={() => setPasswordUser(user)}
+                                    />
+                                </div>
                             </div>
                         ))
                     )}

@@ -140,17 +140,13 @@ export default function Login() {
                             required
                         >
                             <option value="">Select Role</option>
-                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
                             <option value="hod">HOD</option>
                             <option value="security">Security</option>
                         </select>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center text-gray-600">
-                            <input type="checkbox" className="mr-2" />
-                            Remember me
-                        </label>
                         <a href="/forgot-password" className="text-blue-500 hover:text-blue-600">
                             Forgot password?
                         </a>

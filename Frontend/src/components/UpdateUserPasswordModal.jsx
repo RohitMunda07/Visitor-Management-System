@@ -12,6 +12,7 @@ export default function UpdateUserPasswordModal({ user, onClose, onSuccess }) {
     const [showLoader, setShowLoader] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [showError, setShowError] = useState(false);
+    const [loaderMsg, setLoaderMsg] = useState("");
 
     const handleUpdate = async () => {
         if (!newPassword.trim()) {
@@ -21,20 +22,29 @@ export default function UpdateUserPasswordModal({ user, onClose, onSuccess }) {
         }
 
         try {
-            setShowLoader(true);
+            // ✅ reset previous error
+            setErrorMsg("");
+            setShowError(false);
 
-            await put("user/update-password", {
-                userId: user._id,      // 🔥 selected user
+            setShowLoader(true);
+            setLoaderMsg("Updating Password");
+            const response = await put("user/update-password", {
+                userId: user._id,
+                role: user.role,
                 newPassword,
             });
+            console.log(response.data.message);
 
-            onSuccess();
+            onSuccess?.();
             onClose();
         } catch (error) {
-            setErrorMsg(error?.response?.data?.message || "Failed to update password");
+            setErrorMsg(
+                error?.response?.data?.message || "Failed to update password"
+            );
             setShowError(true);
         } finally {
             setShowLoader(false);
+            setLoaderMsg("");
         }
     };
 
@@ -77,13 +87,18 @@ export default function UpdateUserPasswordModal({ user, onClose, onSuccess }) {
 
                 <button
                     onClick={handleUpdate}
-                    className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    disabled={showLoader}
+                    className={`w-full mt-4 px-4 py-2 rounded text-white
+                      ${showLoader
+                            ? "bg-blue-400 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700"
+                        }`}
                 >
                     Update Password
                 </button>
             </div>
 
-            {showLoader && <Loader />}
+            {showLoader && <Loader text={loaderMsg} />}
             {showError && (
                 <ErrorAlert
                     autoClose

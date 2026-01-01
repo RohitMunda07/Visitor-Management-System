@@ -9,19 +9,18 @@ export default function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to="/" replace />;
   }
 
-  // Role-based check (supports multiple roles)
-  if (allowedRole && Array.isArray(allowedRole)) {
-    if (!allowedRole.includes(role)) {
+  // Role check
+  if (allowedRole) {
+    // allowedRole can be string or array
+    const allowedRoles = Array.isArray(allowedRole)
+      ? allowedRole
+      : [allowedRole];
+
+    if (!allowedRoles.includes(role)) {
       return <Navigate to="/" replace />;
     }
   }
 
-  // Single-role fallback (optional safety)
-  if (allowedRole && typeof allowedRole === "string") {
-    if (allowedRole !== role) {
-      return <Navigate to="/" replace />;
-    }
-  }
-
+  // Authorized
   return children;
 }
