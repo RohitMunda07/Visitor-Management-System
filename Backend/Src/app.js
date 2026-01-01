@@ -9,7 +9,10 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-    origin: process.env.FRONTEND_ORIGIN,
+    origin: [
+        process.env.FRONTEND_ORIGIN,
+        "https://visitor-management-system-git-de-fa3b55-dj240800-6382s-projects.vercel.app",
+    ],
     methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
