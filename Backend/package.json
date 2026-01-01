@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "nodemon ./Src/index.js"
+    "dev": "nodemon ./Src/index.js",
+    "start": "node ./Src/index.js"
   },
 
   "type": "module",
