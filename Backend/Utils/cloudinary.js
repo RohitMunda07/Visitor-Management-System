@@ -54,7 +54,7 @@ const delteFromCloudinary = async (publicId) => {
 
 const uploadBufferToCloudinary = (buffer, folder = "vms") => {
     return new Promise((resolve, reject) => {
-        cloudinary.v2.uploader.upload_stream({
+        cloudinary.uploader.upload_stream({
             folder,
             resource_type: "image"
         },
