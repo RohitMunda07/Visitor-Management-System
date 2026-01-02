@@ -2,7 +2,7 @@ import { asyncHandler } from "../Utils/asyncHandler.js";
 import apiResponse from "../Utils/apiResponse.js";
 import Visitor from "../Models/visitor.modle.js";
 import apiError from "../Utils/errorHandler.js";
-import { uploadOnCloudinary, delteFromCloudinary } from "../Utils/cloudinary.js"
+import { delteFromCloudinary, uploadBufferToCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose";
 import { SORT_TYPE } from "../Utils/constant.js";
 
@@ -62,22 +62,25 @@ const insertVisitor = asyncHandler(async (req, res) => {
     }
 
     // Visitor's Imgae Validation
-    const visitorImagePath = req.file?.path;
-
-    if (!visitorImagePath) {
-        throw new apiError(400, "Visitor Image is Missing")
+    if (!req.file || !req.file.buffer) {
+        throw new apiError(400, "Visitor Image is Missing");
     }
 
     let imageData = {};
     try {
-        const res = await uploadOnCloudinary(visitorImagePath);
-        if (res.secure_url) {
-            imageData.imageURL = res.secure_url;
-            imageData.publicId = res.public_id;
-        }
+        const uploadRes = await uploadBufferToCloudinary(
+            req.file.buffer,
+            "vms-visitors"
+        );
+
+        imageData = {
+            imageURL: uploadRes.secure_url,
+            publicId: uploadRes.public_id,
+        };
     } catch (error) {
         throw new apiError(500, "Something went wrong while uploading image");
     }
+
 
 
     // create visitor's detail

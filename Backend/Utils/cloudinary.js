@@ -7,28 +7,28 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnCloudinary = async (localPath) => {
-    try {
-        if (!localPath) return null;
-        console.log("checked localPath");
+// const uploadOnCloudinary = async (localPath) => {
+//     try {
+//         if (!localPath) return null;
+//         console.log("checked localPath");
 
-        const response = await cloudinary.uploader.upload(localPath, {
-            resource_type: "image"
-        })
+//         const response = await cloudinary.uploader.upload(localPath, {
+//             resource_type: "image"
+//         })
 
-        console.log("check after upload");
-        console.log("File Uploaded:", response?.url || "Error Getting Cloudinary URL");
+//         console.log("check after upload");
+//         console.log("File Uploaded:", response?.url || "Error Getting Cloudinary URL");
 
-        fs.unlinkSync(localPath)
-        console.log("File Unlink Successfully");
+//         fs.unlinkSync(localPath)
+//         console.log("File Unlink Successfully");
 
-        return response;
-    } catch (error) {
-        console.log("Cloudinary Upload Error:", error);
-        if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
-        return null;
-    }
-};
+//         return response;
+//     } catch (error) {
+//         console.log("Cloudinary Upload Error:", error);
+//         if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+//         return null;
+//     }
+// };
 
 const delteFromCloudinary = async (publicId) => {
     try {
@@ -52,7 +52,24 @@ const delteFromCloudinary = async (publicId) => {
     }
 };
 
+const uploadBufferToCloudinary = (buffer, folder = "vms") => {
+    return new Promise((resolve, reject) => {
+        cloudinary.v2.uploader.upload_stream({
+            folder,
+            resource_type: "image"
+        },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        ).end(buffer);
+    });
+};
+
+
+
 export {
-    uploadOnCloudinary,
-    delteFromCloudinary
+    // uploadOnCloudinary,
+    delteFromCloudinary,
+    uploadBufferToCloudinary
 }

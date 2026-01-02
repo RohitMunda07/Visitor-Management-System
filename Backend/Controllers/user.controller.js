@@ -4,7 +4,7 @@ import apiError from "../Utils/errorHandler.js"
 import User from "../Models/user.model.js"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
-import { delteFromCloudinary, uploadOnCloudinary } from "../Utils/cloudinary.js"
+import { delteFromCloudinary, uploadBufferToCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose"
 
 // Generate Access and Refresh Token
@@ -75,21 +75,28 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ================= IMAGE VALIDATION ================= */
-    const imagePath = req.file?.path;
-    if (!imagePath) {
+    console.log("FILE OBJECT:", req.file);
+    console.log("FILE Buffer:", req.file.buffer);
+
+    if (!req.file || !req.file.buffer) {
         throw new apiError(400, "Profile image is required");
     }
 
     let imageData = {};
     try {
-        const uploadRes = await uploadOnCloudinary(imagePath);
+        const uploadRes = await uploadBufferToCloudinary(
+            req.file.buffer,
+            "vms-users"
+        );
+
         imageData = {
             imageURL: uploadRes.secure_url,
             publicId: uploadRes.public_id,
         };
-    } catch {
+    } catch (error) {
         throw new apiError(500, "Error uploading profile image");
     }
+
 
     /* ================= CREATE USER ================= */
     const user = await User.create({

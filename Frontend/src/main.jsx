@@ -11,6 +11,9 @@ import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import HodPage from './pages/HodPage.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import VerifyOTP from './pages/VerifyOTP.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 
 const allowedRole = ["admin", "hod"]
 createRoot(document.getElementById('root')).render(
@@ -48,6 +51,10 @@ createRoot(document.getElementById('root')).render(
 
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
 
         </Routes>
       </BrowserRouter>
