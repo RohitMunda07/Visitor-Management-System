@@ -155,12 +155,12 @@ export default function Login() {
                         Login
                     </button>
 
-                    <div className="text-center text-sm text-gray-600 mt-4">
+                    {/* <div className="text-center text-sm text-gray-600 mt-4">
                         Don't have an account?{" "}
                         <a href="/register" className="text-blue-500 hover:text-blue-600">
                             Register
                         </a>
-                    </div>
+                    </div> */}
                 </form>
 
                 {/* Loader */}

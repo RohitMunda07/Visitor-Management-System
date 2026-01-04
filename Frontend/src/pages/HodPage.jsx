@@ -1,4 +1,4 @@
-import { Search, Eye, Lock } from "lucide-react";
+import { Search, Eye, Lock, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
@@ -8,6 +8,8 @@ import UserDetailModal from "../components/UserDetailModal";
 import AddUserModal from "../components/AddUserModal";
 import UpdateUserPasswordModal from "../components/UpdateUserPasswordModal";
 import Pagination from "../components/Pagination";
+import UpdateUserModal from "../components/UpdateUserModal";
+import ProfileDropdown from "../components/ProfileDropdown";
 
 
 export default function HodPage() {
@@ -32,7 +34,7 @@ export default function HodPage() {
 
     const [pagination, setPagination] = useState(null);
     const [page, setPage] = useState(1);
-
+    const [editUser, setEditUser] = useState(null);
 
     // role filter (ONLY admin & security)
     const [roleFilter, setRoleFilter] = useState("admin");
@@ -160,26 +162,16 @@ export default function HodPage() {
     return (
         <div className="space-y-8 px-10 py-8">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">HOD Panel</h1>
-                <div className="flex gap-3 justify-end">
-                    <button
-                        onClick={() => setShowAddUser(true)}
-                        className="px-4 py-2 border bg-white rounded shadow hover:bg-gray-100"
-                    >
-                        Add User
-                    </button>
-
-                    <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 border bg-white rounded shadow hover:bg-gray-100"
-                    >
-                        Logout
-                    </button>
+            <div className="w-full">
+                <div className="flex justify-between items-center gap-3">
+                    <h1 className="text-3xl font-bold text-gray-800">HOD Panel</h1>
+                    <ProfileDropdown
+                        onAddUser={() => setShowAddUser(true)}
+                        onLogout={handleLogout}
+                        onViewProfile={() => setViewUser("self")}
+                    />
                 </div>
-
             </div>
-
 
             {/* Search + Filters */}
             <div className="border bg-white p-6 rounded shadow">
@@ -209,7 +201,7 @@ export default function HodPage() {
 
                         {showRoleFilter && (
                             <div className="absolute mt-2 w-full bg-white border border-gray-300 rounded shadow z-20">
-                                {["admin", "security"].map((role) => (
+                                {["hod", "admin", "security"].map((role) => (
                                     <button
                                         key={role}
                                         onClick={() => {
@@ -263,6 +255,13 @@ export default function HodPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
+                                    {/* Update User */}
+                                    <Pencil
+                                        size={18}
+                                        className="text-green-600 cursor-pointer hover:text-green-700"
+                                        onClick={() => setEditUser(user)}
+                                    />
+
                                     {/* View User */}
                                     <Eye
                                         className="text-blue-500 cursor-pointer"
@@ -295,7 +294,8 @@ export default function HodPage() {
 
             {viewUser && (
                 <UserDetailModal
-                    user={viewUser}
+                    user={viewUser === "self" ? null : viewUser}
+                    isCurrentUser={viewUser === "self"}
                     onClose={() => setViewUser(null)}
                 />
             )}
@@ -320,6 +320,15 @@ export default function HodPage() {
                 pagination={pagination}
                 onPageChange={handlePageChange}
             />
+
+            {editUser && (
+                <UpdateUserModal
+                    user={editUser}
+                    onClose={() => setEditUser(null)}
+                    onSuccess={() => fetchAllAdminAndSecurity(roleFilter)}
+                />
+            )}
+
 
         </div>
     );

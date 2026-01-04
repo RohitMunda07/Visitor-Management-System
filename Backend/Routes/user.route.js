@@ -10,8 +10,10 @@ import {
     updateAccessToken,
     updatePassword,
     getAllAdminAndSecurity,
-    getCurrentUser
+    getCurrentUser,
+    updateUserDetails
 } from '../Controllers/user.controller.js'
+import { upload } from '../Middlewares/multer.middleware.js'
 
 const router = Router();
 
@@ -25,5 +27,7 @@ router.route("/delete-users").delete(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLE
 router.route("/update-password").put(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), updatePassword);
 router.route("/get-all-users").get(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), getAllAdminAndSecurity);
 router.route("/get-current-user").get(verifyJWT, getCurrentUser);
+router.put("/update-user/:userId", verifyJWT, authorizeRoles(ROLES.HOD), upload.single("profileImage"), updateUserDetails);
+
 
 export default router;

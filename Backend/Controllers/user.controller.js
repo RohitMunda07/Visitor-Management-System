@@ -390,6 +390,61 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         )
 })
 
+const updateUserDetails = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new apiError(400, "Invalid User ID");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
+
+    const {
+        fullName,
+        phoneNumber,
+        email,
+        role,
+        aadharDetail
+    } = req.body;
+
+    // Update text fields if provided
+    if (fullName) user.fullName = fullName;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (email) user.email = email;
+    if (role) user.role = role;
+    if (aadharDetail) user.aadharDetail = aadharDetail;
+
+    // Handle profile image update
+    if (req.file?.buffer) {
+        // delete old image
+        if (user.profileImage?.publicId) {
+            await delteFromCloudinary(user.profileImage.publicId);
+        }
+
+        const uploadRes = await uploadBufferToCloudinary(
+            req.file.buffer,
+            "vms-users"
+        );
+
+        user.profileImage = {
+            imageURL: uploadRes.secure_url,
+            publicId: uploadRes.public_id
+        };
+    }
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id)
+        .select("-password -refreshToken -resetPasswordOTP -resetPasswordOTPExpiry");
+
+    return res.status(200).json(
+        new apiResponse(200, updatedUser, "User details updated successfully")
+    );
+});
+
 
 export {
     registerUser,
@@ -399,5 +454,6 @@ export {
     updateAccessToken,
     updatePassword,
     getAllAdminAndSecurity,
-    getCurrentUser
+    getCurrentUser,
+    updateUserDetails
 }

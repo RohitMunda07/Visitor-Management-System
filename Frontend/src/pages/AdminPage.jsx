@@ -10,6 +10,8 @@ import { del, get } from '../api/axiosMethods';
 import Pagination from "../components/Pagination";
 import SortFilter from "../components/SortFilter";
 import { SORT_TYPE } from "../constants/sortType";
+import ProfileDropdown from '../components/ProfileDropdown';
+import UserDetailModal from '../components/UserDetailModal';
 
 
 
@@ -39,6 +41,8 @@ export default function AdminPage() {
   const [sortType, setSortType] = useState(SORT_TYPE.NEWEST);
   const [refreshKey, setRefreshKey] = useState(0);
   const [limit, setLimit] = useState(10); // default page size
+  const [viewUser, setViewUser] = useState(null);
+
 
 
   const mapData = searchData.length === 0 ? visitorData : searchData;
@@ -237,15 +241,13 @@ export default function AdminPage() {
       {/* Upper section */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Page</h1>
-        <div className="flex gap-3">
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow"
-          >
-            Logout
-          </button>
-        </div>
+
+        <ProfileDropdown
+          onViewProfile={() => setViewUser("self")}
+          onLogout={handleLogout}
+        />
       </div>
+
 
       {/* Search Bar */}
       <div className="border-2 border-gray-300 bg-white p-6 rounded-lg shadow">
@@ -409,6 +411,15 @@ export default function AdminPage() {
         pagination={pagination}
         onPageChange={handlePageChange}
       />
+
+      {viewUser && (
+        <UserDetailModal
+          user={viewUser === "self" ? null : viewUser}
+          isCurrentUser={viewUser === "self"}
+          onClose={() => setViewUser(null)}
+        />
+      )}
+
 
     </div>
   );

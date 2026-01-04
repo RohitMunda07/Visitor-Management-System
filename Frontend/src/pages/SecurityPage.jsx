@@ -7,6 +7,8 @@ import { useDispatch } from 'react-redux';
 import { removeAuth } from '../context/authContext';
 import { useRef } from "react";
 import { Search } from 'lucide-react';
+import ProfileDropdown from '../components/ProfileDropdown';
+import UserDetailModal from '../components/UserDetailModal';
 
 
 export default function SecurityPage() {
@@ -22,13 +24,13 @@ export default function SecurityPage() {
 
   const [visitorImage, setVisitorImage] = useState(null);
   const [preview, setPreview] = useState(null);
-
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
+
   const [showLoader, setShowLoader] = useState(false);
   const [loaderMsg, setLoaderMsg] = useState("");
   const fileInputRef = useRef(null);
-
+  const [viewUser, setViewUser] = useState(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -123,13 +125,13 @@ export default function SecurityPage() {
     <div className="space-y-3 inset-0 px-10 py-8 relative">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Security Page</h1>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-100 shadow"
-        >
-          Logout
-        </button>
+
+        <ProfileDropdown
+          onViewProfile={() => setViewUser("self")}
+          onLogout={handleLogout}
+        />
       </div>
+
 
       {/* Search Bar */}
       {/* <div className="border-2 border-gray-300 bg-white p-4 rounded-lg shadow">
@@ -254,6 +256,15 @@ export default function SecurityPage() {
               message={errorMsg}
               onClose={() => setShowError(false)}
             />}
+
+          {viewUser && (
+            <UserDetailModal
+              user={null}
+              isCurrentUser
+              onClose={() => setViewUser(null)}
+            />
+          )}
+
 
         </div>
       </div>
