@@ -114,7 +114,10 @@ export default function SecurityPage() {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Security Panel</h1>
-        <ProfileDropdown />
+        <ProfileDropdown
+          onViewProfile={() => setViewUser("self")}
+          onLogout={handleLogout}
+        />
       </div>
 
       {/* SEARCH + FILTERS */}
