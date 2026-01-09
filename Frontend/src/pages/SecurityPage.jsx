@@ -91,7 +91,7 @@ export default function SecurityPage() {
       setLoaderMsg("Generating Gate Pass");
 
       await post(`visitor/generate-gatepass/${visitorId}`, {});
-      alert("Gate Pass Generated Successfully");
+      // alert("Gate Pass Generated Successfully");
 
       // re-fetch the updated visitors
       await fetchApprovedVisitors(page);

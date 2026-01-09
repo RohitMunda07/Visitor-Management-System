@@ -111,6 +111,7 @@ export default function UpdateUserModal({ user, onClose, onSuccess }) {
             <option value="admin">Admin</option>
             <option value="security">Security</option>
             <option value="hod">HOD</option>
+            <option value="employee">Employee</option>
           </select>
 
           <input

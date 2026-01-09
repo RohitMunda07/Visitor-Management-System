@@ -140,9 +140,9 @@ export default function EmployeePage() {
             <input
               type="text"
               placeholder="Search"
-              className="w-full bg-white border border-gray-300 px-4 py-2 pr-10 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-4 py-2 pr-10 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
-            <Search className="absolute right-3 top-2.5 text-green-500 cursor-pointer" size={20} />
+            <Search className="absolute right-3 top-2.5 text-blue-500 cursor-pointer" size={20} />
           </div>
         </div>
       </div> */}
@@ -158,7 +158,7 @@ export default function EmployeePage() {
               value={visitorData.name}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -170,7 +170,7 @@ export default function EmployeePage() {
               value={visitorData.company}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -182,7 +182,7 @@ export default function EmployeePage() {
               value={visitorData.work}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -194,7 +194,7 @@ export default function EmployeePage() {
               value={visitorData.contact}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -206,7 +206,7 @@ export default function EmployeePage() {
               value={visitorData.aadharDetails}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -218,7 +218,7 @@ export default function EmployeePage() {
               value={visitorData.person}
               onChange={handleOnChange}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800"
             />
           </div>
 
@@ -230,7 +230,7 @@ export default function EmployeePage() {
               ref={fileInputRef}
               onChange={handleImage}
               required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:bg-green-500 file:text-white hover:file:bg-green-600"
+              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-blue-500 text-gray-800 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:bg-blue-500 file:text-white hover:file:bg-blue-600"
             />
             <div className='mt-3 flex justify-center'>
               <img
@@ -243,7 +243,7 @@ export default function EmployeePage() {
           <div className="col-span-2 flex justify-center mt-4">
             <button
               onClick={handleFroward}
-              className="px-8 py-2 border border-gray-300 bg-green-500 text-white rounded hover:bg-green-600 transition-colors shadow">
+              className="px-8 py-2 border border-gray-300 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors shadow">
               Forward
             </button>
           </div>
