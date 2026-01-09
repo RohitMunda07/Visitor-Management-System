@@ -52,7 +52,7 @@ export default function ProfileDropdown({ onAddUser, onLogout, onViewProfile }) 
             <User size={16} /> View Profile
           </button>
 
-          {(currentUser?.role === "hod") && (
+          {(currentUser?.role === "admin") && (
             <button
               onClick={onAddUser}
               className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100"

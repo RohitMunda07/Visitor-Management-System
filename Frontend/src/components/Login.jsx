@@ -66,6 +66,8 @@ export default function Login() {
                 navigate("/admin")
             } else if (role === "hod") {
                 navigate("/hod")
+            } else if (role === "employee") {
+                navigate("/employee")
             } else {
                 navigate("/security")
             }
@@ -139,6 +141,7 @@ export default function Login() {
                             <option value="admin">Admin</option>
                             <option value="hod">HOD</option>
                             <option value="security">Security</option>
+                            <option value="employee">Employee</option>
                         </select>
                     </div>
 

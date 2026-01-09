@@ -5,6 +5,7 @@ import apiError from "../Utils/errorHandler.js";
 import { delteFromCloudinary, uploadBufferToCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose";
 import { SORT_TYPE } from "../Utils/constant.js";
+import { GatePass } from "../Models/gatePass.model.js"
 
 // Add Visitor Information to DB
 const insertVisitor = asyncHandler(async (req, res) => {
@@ -111,7 +112,7 @@ const insertVisitor = asyncHandler(async (req, res) => {
 
 })
 
-// Get All Visitors with filter
+// Get All Visitors with filter + gate pass status
 const getAllVisitors = asyncHandler(async (req, res) => {
     const { page = 1, limit = 50, sortType = "newest", status } = req.query;
 
@@ -121,16 +122,31 @@ const getAllVisitors = asyncHandler(async (req, res) => {
 
     const pageNo = Math.max(1, Number(page));
     const pageSize = Math.max(1, Number(limit));
-
-    const sortValue = SORT_TYPE.NEWEST === sortType ? -1 : 1;
+    const sortValue = sortType === SORT_TYPE.NEWEST ? -1 : 1;
     const offSet = (pageNo - 1) * pageSize;
 
     const query = status !== undefined ? { status } : {};
 
-    const allVisitors = await Visitor.find(query)
+    // 🔹 Fetch visitors
+    const visitors = await Visitor.find(query)
         .sort({ createdAt: sortValue })
         .skip(offSet)
-        .limit(pageSize);
+        .limit(pageSize)
+        .lean(); // 👈 important for mutation
+
+    // 🔹 Attach gate pass info
+    const visitorsWithGatePass = await Promise.all(
+        visitors.map(async (visitor) => {
+            const gatePassExists = await GatePass.exists({
+                visitor: visitor._id
+            });
+
+            return {
+                ...visitor,
+                gatePassGenerated: !!gatePassExists
+            };
+        })
+    );
 
     const totalDocs = await Visitor.countDocuments(query);
     const totalPages = Math.ceil(totalDocs / pageSize);
@@ -139,7 +155,7 @@ const getAllVisitors = asyncHandler(async (req, res) => {
         new apiResponse(
             200,
             {
-                allVisitors,
+                allVisitors: visitorsWithGatePass,
                 pagination: {
                     currentPage: pageNo,
                     dataPerPage: pageSize,
@@ -270,11 +286,78 @@ const deleteVisitor = asyncHandler(async (req, res) => {
         )
 })
 
+// Generate Gate Pass
+const generateGatePass = asyncHandler(async (req, res) => {
+    const { visitorId } = req.params;
+    const securityUserId = req.user._id; // from verifyJWT
+
+    if (!visitorId || !mongoose.Types.ObjectId.isValid(visitorId)) {
+        throw new apiError(400, "Invalid Visitor ID");
+    }
+
+    const visitor = await Visitor.findById(visitorId);
+
+    if (!visitor) {
+        throw new apiError(404, "Visitor not found");
+    }
+
+    if (!visitor.status) {
+        throw new apiError(403, "Visitor not approved by HOD");
+    }
+
+    // Prevent duplicate gate pass
+    const existingGatePass = await GatePass.findOne({ visitor: visitorId });
+    if (existingGatePass) {
+        throw new apiError(409, "Gate pass already generated");
+    }
+
+    // Generate Gate Pass Number
+    const gatePassNumber = `GP-${Date.now()}`;
+
+    const gatePass = await GatePass.create({
+        visitor: visitorId,
+        gatePassNumber,
+        issuedBy: securityUserId,
+    });
+
+    const populatedGatePass = await GatePass.findById(gatePass._id)
+        .populate("visitor", "fullName phoneNumber company visitorImage")
+        .populate("issuedBy", "fullName role");
+
+    return res.status(201).json(
+        new apiResponse(
+            201,
+            populatedGatePass,
+            "Gate pass generated successfully"
+        )
+    );
+
+});
+
+const getGatePassByVisitor = asyncHandler(async (req, res) => {
+    const { visitorId } = req.params;
+
+    const gatePass = await GatePass.findOne({ visitor: visitorId })
+        .populate("visitor", "fullName phoneNumber company visitorImage")
+        .populate("issuedBy", "fullName role");
+
+    if (!gatePass) {
+        throw new apiError(404, "Gate pass not found");
+    }
+
+    return res.status(200).json(
+        new apiResponse(200, gatePass, "Gate pass fetched successfully")
+    );
+});
+
+
 
 export {
     insertVisitor,
     getAllVisitors,
     toggleStatus,
     searchVisitor,
-    deleteVisitor
+    deleteVisitor,
+    generateGatePass,
+    getGatePassByVisitor
 }

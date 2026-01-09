@@ -1,273 +1,232 @@
-import { useEffect, useState } from 'react';
-import { get, post } from '../api/axiosMethods';
-import Loader from '../components/Loader';
-import ErrorAlert from '../components/ErrorAlert';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { removeAuth } from '../context/authContext';
-import { useRef } from "react";
-import { Search } from 'lucide-react';
-import ProfileDropdown from '../components/ProfileDropdown';
-import UserDetailModal from '../components/UserDetailModal';
+import { Search, Eye, Ticket } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../components/Loader";
+import ErrorAlert from "../components/ErrorAlert";
+import Pagination from "../components/Pagination";
+import SortFilter from "../components/SortFilter";
+import ProfileDropdown from "../components/ProfileDropdown";
+import VisitorDetailModal from "../components/VisitorDetailModal";
+import { get, post } from "../api/axiosMethods";
+import { SORT_TYPE } from "../constants/sortType";
+import { addVisitorDetails } from "../context/visitorDetailSlice";
+import { Download } from "lucide-react";
+import GatePassModal from "../components/GatePassModal";
 
 
 export default function SecurityPage() {
-  // visitorImgae
-  const [visitorData, setVisitorData] = useState({
-    name: "",
-    person: "",
-    contact: "",
-    company: "",
-    work: "",
-    aadharDetails: ""
-  });
+  const dispatch = useDispatch();
+  const toggleValue = useSelector((state) => state.visitorDetail.value);
 
-  const [visitorImage, setVisitorImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [showError, setShowError] = useState(false);
+  const [visitors, setVisitors] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [searchData, setSearchData] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const [pagination, setPagination] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [sortType, setSortType] = useState(SORT_TYPE.NEWEST);
 
   const [showLoader, setShowLoader] = useState(false);
   const [loaderMsg, setLoaderMsg] = useState("");
-  const fileInputRef = useRef(null);
-  const [viewUser, setViewUser] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showError, setShowError] = useState(false);
+  const [gatePassVisitorId, setGatePassVisitorId] = useState(null);
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  const handleImage = (e) => {
-    const file = e.target.files[0];
-    console.log(file);
-    if (file && file.type.startsWith("image/")) {
-      setVisitorImage(file);
-      setPreview(URL.createObjectURL(file));
-    } else {
-      alert("Please select a valid image file");
-    }
-  }
+  const mapData = searchData.length === 0 ? visitors : searchData;
 
-  const handleOnChange = (e) => {
-    e.preventDefault();
-    const { name, value } = e.target
-    setVisitorData((prevData) => ({
-      ...prevData,
-      [name]: value
-    }))
-  }
-
-  const handleFroward = async () => {
-    const formData = new FormData();
-    formData.append("fullName", visitorData.name);
-    formData.append("company", visitorData.company);
-    formData.append("work", visitorData.work);
-    formData.append("phoneNumber", visitorData.contact);
-    formData.append("aadharDetail", visitorData.aadharDetails);
-    formData.append("personToVisiting", visitorData.person);
-    formData.append("visitorImage", visitorImage);
-
+  /* ================= FETCH APPROVED VISITORS ================= */
+  const fetchApprovedVisitors = async (pageNo = 1) => {
     try {
       setShowLoader(true);
-      setLoaderMsg("Adding Visitor");
-      const response = await post("visitor/insert-visitor", formData, {
-        "Content-Type": "multipart/form-data"
+      setLoaderMsg("Fetching Approved Visitors");
+
+      const response = await get("visitor/get-all-visitor", {
+        params: {
+          page: pageNo,
+          limit,
+          sortType,
+          status: true, // ✅ ONLY APPROVED VISITORS
+        },
       });
 
-      console.log("data inserted:", response.data);
-
+      setVisitors(response.data.data.allVisitors || []);
+      setPagination(response.data.data.pagination);
+      setPage(pageNo);
     } catch (error) {
-      console.log("error while inserting data", error);
-      setErrorMsg(error.message);
+      setErrorMsg(error?.response?.data?.message || "Failed to fetch visitors");
       setShowError(true);
     } finally {
       setShowLoader(false);
       setLoaderMsg("");
     }
+  };
 
-    setVisitorData({
-      name: "",
-      person: "",
-      contact: "",
-      company: "",
-      work: "",
-      aadharDetails: "",
-    });
-
-    setPreview(null);
-    setVisitorImage(null);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  /* ================= SEARCH (DEBOUNCE) ================= */
+  const handleSearch = () => {
+    if (!searchValue.trim()) {
+      setSearchData([]);
+      setIsSearching(false);
+      return;
     }
-  }
 
-  const handleLogout = async () => {
+    setIsSearching(true);
+    const filtered = visitors.filter((v) =>
+      v.fullName.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    setSearchData(filtered);
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(handleSearch, 300);
+    return () => clearTimeout(delay);
+  }, [searchValue]);
+
+  /* ================= GATE PASS ================= */
+  const generateGatePass = async (visitorId) => {
     try {
       setShowLoader(true);
-      setLoaderMsg("Logging Out");
-      const response = await get("auth/logout");
-      console.log(response.data.message);
-      sessionStorage.clear();
-      dispatch(removeAuth());
-      navigate("/");
+      setLoaderMsg("Generating Gate Pass");
+
+      await post(`visitor/generate-gatepass/${visitorId}`, {});
+      alert("Gate Pass Generated Successfully");
     } catch (error) {
-      console.log("Error while logout", error);
+      setErrorMsg(error?.response?.data?.message || "Failed to generate gate pass");
+      setShowError(true);
     } finally {
       setShowLoader(false);
       setLoaderMsg("");
     }
-  }
+  };
 
+  /* ================= EFFECT ================= */
   useEffect(() => {
-    console.log("user form data", visitorData);
-  }, [preview, visitorImage])
+    fetchApprovedVisitors(1);
+  }, [limit, sortType]);
 
   return (
-    <div className="space-y-3 inset-0 px-10 py-8 relative">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Security Page</h1>
-
-        <ProfileDropdown
-          onViewProfile={() => setViewUser("self")}
-          onLogout={handleLogout}
-        />
+    <div className="space-y-8 px-10 py-8">
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-800">Security Panel</h1>
+        <ProfileDropdown />
       </div>
 
-
-      {/* Search Bar */}
-      {/* <div className="border-2 border-gray-300 bg-white p-4 rounded-lg shadow">
-        <div className="flex gap-4 items-center">
+      {/* SEARCH + FILTERS */}
+      <div className="border bg-white p-6 rounded shadow">
+        <div className="flex gap-4 mb-4 items-center">
           <div className="flex-1 relative">
             <input
-              type="text"
-              placeholder="Search"
-              className="w-full bg-white border border-gray-300 px-4 py-2 pr-10 rounded focus:outline-none focus:border-green-500 text-gray-800"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Search visitor"
+              className="w-full border px-4 py-2 rounded"
             />
-            <Search className="absolute right-3 top-2.5 text-green-500 cursor-pointer" size={20} />
+            <Search className="absolute right-3 top-2.5 text-blue-500" size={20} />
           </div>
+
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="px-3 py-2 border rounded text-sm"
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+          </select>
+
+          <SortFilter value={sortType} onChange={setSortType} />
         </div>
-      </div> */}
 
-      {/* Visitor Form */}
-      <div className="border-2 border-gray-300 bg-white px-5 py-3 rounded-lg w-full shadow">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className="block mb-2 text-gray-700">fullName</label>
-            <input
-              type="text"
-              name="name"
-              value={visitorData.name}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
+        {/* VISITOR LIST */}
+        <div className="space-y-3">
+          {mapData.length === 0 ? (
+            <p className="text-center text-gray-500">No visitors found</p>
+          ) : (
+            mapData.map((visitor, index) => (
+              <div
+                key={visitor._id}
+                className="border p-4 rounded flex justify-between items-center"
+              >
+                <span className="font-medium capitalize">
+                  #{index + 1} {visitor.fullName}
+                </span>
 
-          <div className="col-span-2">
-            <label className="block mb-2 text-gray-700">company</label>
-            <input
-              type="text"
-              name="company"
-              value={visitorData.company}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
+                <div className="flex gap-3 items-center">
+                  {/* VIEW VISITOR */}
+                  <Eye
+                    className="text-blue-600 cursor-pointer hover:text-blue-700"
+                    onClick={() =>
+                      dispatch(
+                        addVisitorDetails({
+                          id: visitor._id,
+                          name: visitor.fullName,
+                          person: visitor.personToVisiting,
+                          contact: visitor.phoneNumber,
+                          company: visitor.company,
+                          work: visitor.work,
+                          aadharDetails: visitor.aadharDetail,
+                          image: visitor.visitorImage?.imageURL,
+                          status: visitor.status,
+                        })
+                      )
+                    }
+                  />
 
-          <div className="col-span-2">
-            <label className="block mb-2 text-gray-700">work</label>
-            <input
-              type="text"
-              name="work"
-              value={visitorData.work}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
+                  {/* GENERATE */}
+                  <button
+                    disabled={!visitor.status}
+                    onClick={() => generateGatePass(visitor._id)}
+                    className={`px-3 py-1 text-sm rounded border ${visitor.status
+                      ? "bg-green-50 text-green-700"
+                      : "bg-gray-100 text-gray-400"
+                      }`}
+                  >
+                    <Ticket size={16} />
+                  </button>
 
-          <div>
-            <label className="block mb-2 text-gray-700">phoneNumber</label>
-            <input
-              type="text"
-              name="contact"
-              value={visitorData.contact}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
+                  {/* DOWNLOAD (ONLY IF GATE PASS EXISTS) */}
+                  {visitor.gatePassGenerated && (
+                    <Download
+                      size={18}
+                      className="text-indigo-600 cursor-pointer hover:text-indigo-700"
+                      onClick={() => setGatePassVisitorId(visitor._id)}
+                    />
+                  )}
 
-          <div>
-            <label className="block mb-2 text-gray-700">aadharDetail</label>
-            <input
-              type="text"
-              name="aadharDetails"
-              value={visitorData.aadharDetails}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
-
-          <div className="col-span-2">
-            <label className="block mb-2 text-gray-700">personToVisiting</label>
-            <input
-              type="text"
-              name="person"
-              value={visitorData.person}
-              onChange={handleOnChange}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800"
-            />
-          </div>
-
-          <div className="col-span-2">
-            <label className="block mb-2 text-gray-700">Visitor Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleImage}
-              required
-              className="w-full bg-white border border-gray-300 px-3 py-2 rounded focus:outline-none focus:border-green-500 text-gray-800 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:bg-green-500 file:text-white hover:file:bg-green-600"
-            />
-            <div className='mt-3 flex justify-center'>
-              <img
-                className='w-2xl'
-                src={preview}
-                alt="" />
-            </div>
-          </div>
-
-          <div className="col-span-2 flex justify-center mt-4">
-            <button
-              onClick={handleFroward}
-              className="px-8 py-2 border border-gray-300 bg-green-500 text-white rounded hover:bg-green-600 transition-colors shadow">
-              Forward
-            </button>
-          </div>
-
-          {showLoader && <Loader text={loaderMsg} size='medium' />}
-
-          {showError &&
-            <ErrorAlert
-              autoClose={true}
-              message={errorMsg}
-              onClose={() => setShowError(false)}
-            />}
-
-          {viewUser && (
-            <UserDetailModal
-              user={null}
-              isCurrentUser
-              onClose={() => setViewUser(null)}
-            />
+                </div>
+              </div>
+            ))
           )}
-
-
         </div>
       </div>
+
+      <Pagination
+        pagination={pagination}
+        onPageChange={fetchApprovedVisitors}
+      />
+
+      {/* VISITOR MODAL */}
+      {toggleValue && <VisitorDetailModal />}
+
+      {showLoader && <Loader text={loaderMsg} />}
+      {showError && (
+        <ErrorAlert
+          autoClose
+          message={errorMsg}
+          onClose={() => setShowError(false)}
+        />
+      )}
+
+      {gatePassVisitorId && (
+        <GatePassModal
+          visitorId={gatePassVisitorId}
+          onClose={() => setGatePassVisitorId(null)}
+        />
+      )}
+
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SecurityPage from "../pages/SecurityPage";
+import SecurityPage from "../pages/EmployeePage";
 import AdminPage from "../pages/AdminPage";
 import VisitorDetailModal from "./VisitorDetailModal";
 import { useSelector, useDispatch } from "react-redux"

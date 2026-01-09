@@ -49,7 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ================= ROLE VALIDATION ================= */
-    const allowedRoles = ["admin", "security", "hod"];
+    const allowedRoles = ["admin", "security", "hod", "employee"];
     if (!allowedRoles.includes(role)) {
         throw new apiError(400, "Invalid role");
     }

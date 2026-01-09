@@ -144,7 +144,7 @@ export default function AddUserModal({ onClose, onSuccess }) {
 
                         {showRoleDropdown && (
                             <div className="absolute mt-1 w-full bg-white border rounded shadow z-20">
-                                {["hod","admin", "security"].map((r) => (
+                                {["employee", "hod", "admin", "security"].map((r) => (
                                     <button
                                         key={r}
                                         onClick={() => {
