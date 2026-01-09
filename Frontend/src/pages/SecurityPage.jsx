@@ -92,6 +92,9 @@ export default function SecurityPage() {
 
       await post(`visitor/generate-gatepass/${visitorId}`, {});
       alert("Gate Pass Generated Successfully");
+
+      // re-fetch the updated visitors
+      await fetchApprovedVisitors(page);
     } catch (error) {
       setErrorMsg(error?.response?.data?.message || "Failed to generate gate pass");
       setShowError(true);
@@ -104,7 +107,7 @@ export default function SecurityPage() {
   /* ================= EFFECT ================= */
   useEffect(() => {
     fetchApprovedVisitors(1);
-  }, [limit, sortType]);
+  }, [limit, sortType, gatePassVisitorId]);
 
   return (
     <div className="space-y-8 px-10 py-8">
