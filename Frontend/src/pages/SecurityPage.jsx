@@ -79,6 +79,25 @@ export default function SecurityPage() {
     setSearchData(filtered);
   };
 
+  /* ================= Logout User ================= */
+  const handleLogout = async () => {
+    try {
+      setShowLoader(true);
+      setLoaderMsg("Logging Out")
+      const response = await get("auth/logout");
+      console.log(response.data.message);
+      sessionStorage.clear();
+      navigate("/");
+    } catch (error) {
+      console.log("Error while logout", error);
+      setErrorMsg(error.message);
+    } finally {
+      setShowLoader(false);
+      setLoaderMsg("");
+    }
+  }
+
+
   useEffect(() => {
     const delay = setTimeout(handleSearch, 300);
     return () => clearTimeout(delay);
