@@ -13,6 +13,7 @@ import { addVisitorDetails } from "../context/visitorDetailSlice";
 import { Download } from "lucide-react";
 import GatePassModal from "../components/GatePassModal";
 import { useNavigate } from "react-router-dom";
+import UserDetailModal from "../components/UserDetailModal";
 
 
 export default function SecurityPage() {
@@ -237,7 +238,7 @@ export default function SecurityPage() {
           onClose={() => setViewUser(null)}
         />
       )}
-      
+
       <Pagination
         pagination={pagination}
         onPageChange={fetchApprovedVisitors}
