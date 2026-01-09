@@ -55,6 +55,7 @@ export default function ForgotPassword() {
           <option value="admin">Admin</option>
           <option value="hod">HOD</option>
           <option value="security">Security</option>
+          <option value="employee">Employee</option>
         </select>
 
         <button
