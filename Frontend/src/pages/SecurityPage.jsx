@@ -230,6 +230,14 @@ export default function SecurityPage() {
         </div>
       </div>
 
+      {viewUser && (
+        <UserDetailModal
+          user={viewUser === "self" ? null : viewUser}
+          isCurrentUser={viewUser === "self"}
+          onClose={() => setViewUser(null)}
+        />
+      )}
+      
       <Pagination
         pagination={pagination}
         onPageChange={fetchApprovedVisitors}
