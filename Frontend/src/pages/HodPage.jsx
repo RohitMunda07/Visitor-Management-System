@@ -42,8 +42,7 @@ export default function HodPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [limit, setLimit] = useState(10); // default page size
   const [viewUser, setViewUser] = useState(null);
-
-
+  
 
   const mapData = searchData.length === 0 ? visitorData : searchData;
 

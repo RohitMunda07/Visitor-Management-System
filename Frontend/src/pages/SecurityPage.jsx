@@ -12,12 +12,13 @@ import { SORT_TYPE } from "../constants/sortType";
 import { addVisitorDetails } from "../context/visitorDetailSlice";
 import { Download } from "lucide-react";
 import GatePassModal from "../components/GatePassModal";
+import { useNavigate } from "react-router-dom";
 
 
 export default function SecurityPage() {
   const dispatch = useDispatch();
   const toggleValue = useSelector((state) => state.visitorDetail.value);
-
+  const navigate = useNavigate();
   const [visitors, setVisitors] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [searchData, setSearchData] = useState([]);
@@ -33,6 +34,7 @@ export default function SecurityPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showError, setShowError] = useState(false);
   const [gatePassVisitorId, setGatePassVisitorId] = useState(null);
+  const [viewUser, setViewUser] = useState(null);
 
 
   const mapData = searchData.length === 0 ? visitors : searchData;
