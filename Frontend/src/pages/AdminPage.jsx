@@ -10,6 +10,9 @@ import UpdateUserPasswordModal from "../components/UpdateUserPasswordModal";
 import Pagination from "../components/Pagination";
 import UpdateUserModal from "../components/UpdateUserModal";
 import ProfileDropdown from "../components/ProfileDropdown";
+import { SORT_TYPE } from "../constants/sortType";
+import SortFilter from "../components/SortFilter";
+
 
 
 export default function HodPage() {
@@ -39,6 +42,8 @@ export default function HodPage() {
     // role filter (ONLY admin & security)
     const [roleFilter, setRoleFilter] = useState("admin");
     const [showRoleFilter, setShowRoleFilter] = useState(false);
+    const [limit, setLimit] = useState(10);
+    const [sortType, setSortType] = useState(SORT_TYPE.NEWEST);
 
     const filteredUsers = (searchData.length === 0 ? users : searchData).filter(
         (user) => user.role === roleFilter
@@ -54,11 +59,10 @@ export default function HodPage() {
                 params: {
                     role,
                     page: pageNo,
-                    limit: 50,
+                    limit,
+                    sortType,
                 },
             });
-            console.log(response.data.data);
-            console.log(response.data.data.pagination);
 
             setUsers(response.data.data.users || []);
             setPagination(response.data.data.pagination);
@@ -148,11 +152,10 @@ export default function HodPage() {
         fetchAllAdminAndSecurity(roleFilter, pageNo);
     };
 
-
     /* ================= EFFECTS ================= */
     useEffect(() => {
-        fetchAllAdminAndSecurity(roleFilter);
-    }, []);
+        fetchAllAdminAndSecurity(roleFilter, page);
+    }, [roleFilter, limit, sortType, page]);
 
     useEffect(() => {
         const delay = setTimeout(() => handleSearch(), 200);
@@ -177,13 +180,32 @@ export default function HodPage() {
             <div className="border bg-white p-6 rounded shadow">
                 <div className="flex gap-4 mb-4">
                     <div className="flex-1 relative">
-                        <input
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            placeholder="Search by name"
-                            className="w-full border px-4 py-2 rounded"
-                        />
-                        <Search className="absolute right-3 top-2.5 text-blue-500" size={20} />
+                        <div className="flex gap-4 mb-4 items-center">
+                            {/* Search */}
+                            <div className="flex-1 relative">
+                                <input
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                    placeholder="Search by name"
+                                    className="w-full border px-4 py-2 rounded"
+                                />
+                                <Search className="absolute right-3 top-2.5 text-blue-500" size={20} />
+                            </div>
+
+                            {/* Limit */}
+                            <select
+                                value={limit}
+                                onChange={(e) => setLimit(Number(e.target.value))}
+                                className="px-3 py-2 border rounded text-sm"
+                            >
+                                <option value={5}>5 / page</option>
+                                <option value={10}>10 / page</option>
+                                <option value={20}>20 / page</option>
+                            </select>
+
+                            {/* Sort */}
+                            <SortFilter value={sortType} onChange={setSortType} />
+                        </div>
                     </div>
 
                     {/* Role Dropdown */}
@@ -223,7 +245,7 @@ export default function HodPage() {
                         onClick={handleMultipleDelete}
                         disabled={selectedUsers.length === 0}
                         className={`px-3 py-1.5 text-sm rounded border shadow
-              ${selectedUsers.length === 0
+                             ${selectedUsers.length === 0
                                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                 : "bg-red-50 text-red-600 hover:bg-red-100"
                             }`}

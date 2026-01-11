@@ -15,6 +15,7 @@ import HodPage from './pages/HodPage.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import VerifyOTP from './pages/VerifyOTP.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
+import InsertVisitorPage from './pages/InsertVisitorPage.jsx'
 
 const allowedRole = ["admin", "hod"]
 createRoot(document.getElementById('root')).render(
@@ -28,6 +29,15 @@ createRoot(document.getElementById('root')).render(
             element={
               <ProtectedRoute allowedRole="employee">
                 <EmployeePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/insert-visitor"
+            element={
+              <ProtectedRoute allowedRole="employee">
+                <InsertVisitorPage />
               </ProtectedRoute>
             }
           />

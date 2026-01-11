@@ -1,11 +1,13 @@
 import { User, LogOut, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { get } from "../api/axiosMethods";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfileDropdown({ onAddUser, onLogout, onViewProfile }) {
   const [open, setOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -37,12 +39,13 @@ export default function ProfileDropdown({ onAddUser, onLogout, onViewProfile }) 
         />
       </button>
 
-      {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-2 w-52 bg-white border rounded shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-56 bg-white border rounded shadow-lg z-50">
           <div className="px-4 py-3 border-b">
             <p className="font-medium capitalize">{currentUser?.fullName}</p>
-            <p className="text-xs text-gray-500">{currentUser?.role}</p>
+            <p className="text-xs text-gray-500 capitalize">
+              {currentUser?.role}
+            </p>
           </div>
 
           <button
@@ -52,12 +55,23 @@ export default function ProfileDropdown({ onAddUser, onLogout, onViewProfile }) 
             <User size={16} /> View Profile
           </button>
 
-          {(currentUser?.role === "admin") && (
+          {/* ADMIN & HOD */}
+          {(currentUser?.role === "admin" || currentUser?.role === "hod") && (
             <button
               onClick={onAddUser}
               className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100"
             >
               <Plus size={16} /> Add User
+            </button>
+          )}
+
+          {/* EMPLOYEE */}
+          {currentUser?.role === "employee" && (
+            <button
+              onClick={() => navigate("/insert-visitor")}
+              className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-100"
+            >
+              <Plus size={16} /> Insert Visitor
             </button>
           )}
 

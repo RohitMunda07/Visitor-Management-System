@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import { delteFromCloudinary, uploadBufferToCloudinary } from "../Utils/cloudinary.js"
 import mongoose from "mongoose"
+import { SORT_TYPE } from "../Utils/constant.js"
 
 // Generate Access and Refresh Token
 const generateAccessAndRefreshToken = async (id) => {
@@ -326,54 +327,49 @@ const updatePassword = asyncHandler(async (req, res) => {
     );
 });
 
-// Get All Admin and Security 
+// Get All Admin and Security
 const getAllAdminAndSecurity = asyncHandler(async (req, res) => {
-    // Accept role via query to match pagination usage (GET requests)
-    const { role } = req.query;
+    const { role, sortType = "newest" } = req.query;
     const { page = 1, limit = 50 } = req.query;
 
     if (!role) {
         throw new apiError(400, "Role is required");
     }
 
-    const pageNo = Math.min(1, Number(page));
-    const pageSize = Math.max(50, Number(limit));
+    // FIXED pagination logic
+    const pageNo = Math.max(1, Number(page));
+    const pageSize = Math.max(1, Number(limit));
     const offSet = (pageNo - 1) * pageSize;
+
+    // Sorting Logic
+    const sortValue = sortType === SORT_TYPE.OLDEST ? 1 : -1;
 
     const users = await User.find({ role })
         .select("-password -refreshToken")
+        .sort({ createdAt: sortValue })
         .skip(offSet)
         .limit(pageSize);
 
-    if (users.length === 0) {
-        throw new apiError(404, `No record found for ${role}`);
-    }
-
     const totalDocs = await User.countDocuments({ role });
-    const totalPages = Math.ceil(totalDocs / limit);
-    const hasPrevious = pageNo > 1;
-    const hasNext = pageNo < totalPages;
+    const totalPages = Math.ceil(totalDocs / pageSize);
 
-    return res
-        .status(200)
-        .json(
-            new apiResponse(
-                200,
-                {
-                    users,
-                    pagination: {
-                        currentPage: pageNo,
-                        dataPerPage: pageSize,
-                        totalPages,
-                        hasNext,
-                        hasPrevious
-                    }
-                },
-                "Record fetched successfully"
-            )
+    return res.status(200).json(
+        new apiResponse(
+            200,
+            {
+                users,
+                pagination: {
+                    currentPage: pageNo,
+                    dataPerPage: pageSize,
+                    totalPages,
+                    hasNext: pageNo < totalPages,
+                    hasPrevious: pageNo > 1,
+                }
+            },
+            "Record fetched successfully"
         )
-
-})
+    );
+});
 
 // Get Current User
 const getCurrentUser = asyncHandler(async (req, res) => {
