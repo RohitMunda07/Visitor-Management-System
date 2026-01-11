@@ -25,9 +25,9 @@ const router = Router();
 // secure routes
 router.route("/delete-users").delete(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), deleteUser);
 router.route("/update-password").put(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), updatePassword);
-router.route("/get-all-users").get(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD), getAllAdminAndSecurity);
+router.route("/get-all-users").get(verifyJWT, authorizeRoles(ROLES.ADMIN, ROLES.HOD, ROLES.SECURITY, ROLES.Employee), getAllAdminAndSecurity);
 router.route("/get-current-user").get(verifyJWT, getCurrentUser);
-router.put("/update-user/:userId", verifyJWT, authorizeRoles(ROLES.HOD), upload.single("profileImage"), updateUserDetails);
+router.put("/update-user/:userId", verifyJWT, authorizeRoles(ROLES.ADMIN), upload.single("profileImage"), updateUserDetails);
 
 
 export default router;
