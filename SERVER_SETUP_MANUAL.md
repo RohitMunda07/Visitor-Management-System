@@ -439,6 +439,40 @@ http://localhost:5173
 
 ---
 
+## NOTE:- One Time Manual Addition of Admin
+STEP 1️: Generate a bcrypt hash for password
+---
+Option A (Recommended): Use Node.js once
+Run this in terminal:
+```js
+node
+```
+Then:
+```js
+const bcrypt = require("bcrypt");
+bcrypt.hash("admin123", 10).then(console.log);
+```
+---
+Example output:
+---
+```
+$2b$10$gZQ0d7vC8Z9wV2KXnZxF0e3F9l7JpZ1YH0vF9xC3Jb5dYwqE0Zk1S
+```
+Copy this hash.
+
+STEP 2️: Insert Admin User in DB
+---
+```js
+  "fullName": "Admin",
+  "phoneNumber": "admin"
+  "email": "9334671572"
+"password":"$2b$10$gZQ0d7vC8Z9wV2KXnZxF0e3F9l7JpZ1YH0vF9xC3Jb5dYwqE0Zk1S"
+  "role": "admin"
+  "aadharDetail": "8100091"
+```
+---
+## NOTE: This Admin can be use to create further different user with different roles 
+---
 ## 10. Application Workflow (Brief)
 
 1. **Employee**
